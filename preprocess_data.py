@@ -1,104 +1,74 @@
-import sys
-from pyspark.sql import SparkSession, DataFrame
-from pyspark.sql.functions import col, lit, explode, max as _max, to_date, to_timestamp, year, month, trim, replace, split, array_remove,date_format
-from functools import reduce
-import pandas as pd
 import os
+import pandas as pd
 
-#TANTO LOS ARCHIVOS BRUTOS COMO EL ARCHIVO LIMPIO SE ENCUENTRAN EN LA MISMA CARPETA QUE CONTIENE ESTE SCRYPT
+#TANTO LOS ARCHIVOS BRUTOS COMO EL ARCHIVO LIMPIO SE ENCUENTRAN EN LA MISMA CARPETA QUE CONTIENE ESTE SCRIPT
 
-if os.name == "nt":  # 'nt' significa que el sistema operativo es Windows
-    os.environ["HADOOP_HOME"] = os.getcwd()
-    os.environ["hadoop.home.dir"] = os.getcwd()
+ruta_entrada = os.path.dirname(os.path.abspath(__file__))
+ruta_salida = os.path.join(ruta_entrada, "dataframe_final_limpio.pkl")
 
-spark=SparkSession.builder.appName("Preprocesamiento").getOrCreate()
-spark.conf.set("spark.sql.ansi.enabled", "false")
 
 def actualizacion_categoria_pais(ruta_csv, ruta_json, nombre_pais):
 
-    """Función que actualiza la category_id del Csv reemplazando por el valor string asignado en el fichero json y añade columna con el pais"""
-    
-    dfjson = spark.read.option("multiLine", "true").json(ruta_json)#en vez de leer linea por linea, empaqueta todo el json
-    dfjson_aplanado = dfjson.select(explode("items").alias("item")).select(col("item.id").alias("json_id"), col("item.snippet.title").alias("category"))
-    
-    dfcsv = spark.read.options(header=True, encoding="UTF-8").csv(ruta_csv)
-    dfcsv = dfcsv.withColumn("category_id", col("category_id").cast("string"))
-    
-    df_final = dfcsv.join(dfjson_aplanado, dfcsv["category_id"] == dfjson_aplanado["json_id"], "left")
-    
-    df_final = df_final.drop("json_id","category_id")
+    """Función que actualiza la category_id del Csv reemplazando por el valor string asignado en el fichero json y añade columna con el pais."""
 
-    df_final = df_final.withColumn("pais", lit(nombre_pais))
-                
+    dfjson = pd.read_json(ruta_json)#en vez de leer linea por linea, empaqueta todo el json
+    dfjson_aplanado = pd.json_normalize(dfjson['items'])
+    dfjson_items = pd.DataFrame({'json_id': dfjson_aplanado['id'].astype(str),'category': dfjson_aplanado['snippet.title']})
+
+    dfcsv = pd.read_csv(ruta_csv, encoding='utf-8', encoding_errors='replace')
+    dfcsv['category_id'] = dfcsv['category_id'].astype(str)
+
+    df_final = pd.merge(dfcsv, dfjson_items, left_on='category_id', right_on='json_id', how='left')
+
+    df_final = df_final.drop(columns=['json_id', 'category_id'])
+
+    df_final['pais'] = nombre_pais#creamos la columna pais
+
     return df_final
-    
+
+
 paises = {"CA":"Canadá","DE":"Alemania","FR":"Francia","GB":"Gran Bretaña","IN":"India","JP":"Japón","KR":"Corea","MX":"Mexico","RU":"Rusia","US":"USA"}
-#Si entrara un dataframe ES:España no nos lo leería por lo que si fuera necesario habria que automatizar el código para que lea cualquier dataframe de cualquier país. En este caso, entendemos que los ficheros siempre serán de los mismo países.
 
-dataframes_spark = (actualizacion_categoria_pais(f"{c}videos.csv", f"{c}_category_id.json", nombre) for c, nombre in paises.items())
+dataframe_por_pais = (actualizacion_categoria_pais(os.path.join(ruta_entrada, f"{c}videos.csv"), os.path.join(ruta_entrada, f"{c}_category_id.json"), nombre) for c, nombre in paises.items())
 
-df_spark_unido= reduce(DataFrame.union, dataframes_spark)
+#Unificamos todos los dataframes
+dataframe_final = pd.concat(dataframe_por_pais, ignore_index=True)
 
-df_spark_unido = df_spark_unido.dropDuplicates()
+#Quitamos duplicados exactos
+dataframe_final.drop_duplicates(inplace=True)
 
-df_spark_unido = df_spark_unido.drop("video_id", "thumbnail_link","description","video_error_or_removed")
+#Eliminamos columnas sin información útil para los modelos
+dataframe_final.drop(["video_id", "thumbnail_link", "description", "video_error_or_removed"], axis=1, inplace=True)
 
-df_spark_unido = df_spark_unido.dropna()
+#Eliminamos los nulos de category
+dataframe_final.dropna(inplace=True)
 
-df_max_visitas = df_spark_unido.groupBy("title", "channel_title", "pais").agg(_max("views").alias("views"))
-df_spark_unido = df_spark_unido.join(df_max_visitas, on=["title", "channel_title", "pais", "views"], how="inner")
+#Eliminamos las categorías con muy pocos registros
+dataframe_final.drop(dataframe_final[dataframe_final["category"].isin(["Trailers", "Movies", "Nonprofits & Activism"])].index, inplace=True)
 
-df_spark_unido = df_spark_unido \
-    .withColumn("views", col("views").cast("integer")) \
-    .withColumn("likes", col("likes").cast("integer")) \
-    .withColumn("dislikes", col("dislikes").cast("integer")) \
-    .withColumn("comment_count", col("comment_count").cast("integer")) \
-    .withColumn("comments_disabled", col("comments_disabled").cast("boolean")) \
-    .withColumn("ratings_disabled", col("ratings_disabled").cast("boolean")) \
-    .withColumn("video_error_or_removed", col("video_error_or_removed").cast("boolean")) \
-    .withColumn("trending_date", date_format(to_date(col("trending_date"), "yy.dd.MM"), "dd/MM/yyyy")) \
-    .withColumn("publish_time", date_format(col("publish_time").cast("date"), "dd/MM/yyyy"))
+#Antes de quitar duplicados guardamos el primer día en tendencias de cada vídeo en cada país
+dataframe_final["trending_date"] = pd.to_datetime(dataframe_final["trending_date"], format="%y.%d.%m", errors="coerce").dt.floor('D')
+dataframe_final["primer_trending"] = dataframe_final.groupby(["channel_title", "title", "pais"])["trending_date"].transform("min")
 
-df_spark_unido = df_spark_unido \
-    .withColumn("title", replace(col("title"), lit("\n"), lit(" "))) \
-    .withColumn("title", replace(col("title"), lit("\t"), lit(" "))) \
-    .withColumn("title", replace(col("title"), lit('"'), lit("")))
+#Dejamos un único registro por video y país, el de más views
+dataframe_final.sort_values(by="views", ascending=False, inplace=True)
+dataframe_final.drop_duplicates(subset=["channel_title", "title", "pais"],keep="first",inplace=True)
 
-df_spark_unido = df_spark_unido.withColumn("title", trim(col("title")))
+#Calculamos los días desde la publicación hasta que fue tendencia por primera vez
+dataframe_final["publish_time"] = pd.to_datetime(dataframe_final["publish_time"], errors="coerce").dt.tz_localize(None).dt.floor('D')
+dataframe_final["dias_desde_publicacion"] = (dataframe_final["primer_trending"] - dataframe_final["publish_time"]).dt.days.clip(lower=0)
 
-df_spark_unido = df_spark_unido \
-    .withColumn("title", replace(col("title"), lit("  "), lit(" "))) \
-    .withColumn("title", replace(col("title"), lit("  "), lit(" "))) \
-    .withColumn("title", replace(col("title"), lit("  "), lit(" ")))
+dataframe_final.drop(["trending_date","publish_time","primer_trending"], axis=1, inplace=True)
 
-df_spark_unido = df_spark_unido \
-    .withColumn("channel_title", replace(col("channel_title"), lit("\n"), lit(" "))) \
-    .withColumn("channel_title", replace(col("channel_title"), lit("\t"), lit(" "))) \
-    .withColumn("channel_title", replace(col("channel_title"), lit('"'), lit("")))
+#Quitamos espacios y saltos de línea en title y channel_title
+dataframe_final["title"] = (dataframe_final["title"].str.strip().str.split().str.join(" "))
+dataframe_final["channel_title"] = (dataframe_final["channel_title"].str.strip().str.split().str.join(" "))
 
-df_spark_unido = df_spark_unido.withColumn("channel_title", trim(col("channel_title")))
+#En tags además separamos por "|" y lo guardamos como lista
+dataframe_final["tags"] = (dataframe_final["tags"].str.strip().str.split().str.join(" "))
+dataframe_final["tags"] = dataframe_final["tags"].str.replace('"', '', regex=False)#regex=False: busca el texto tal cual, sin tratarlo como expresión regular
+dataframe_final["tags"] = dataframe_final["tags"].str.replace('[none]', '', regex=False)
+dataframe_final["tags"] = (dataframe_final["tags"].str.strip().str.split("|", regex=False))
+dataframe_final["tags"] = dataframe_final["tags"].apply(lambda lista: [tag for tag in lista if tag != ""])#quitamos las etiquetas vacías
 
-df_spark_unido = df_spark_unido \
-    .withColumn("channel_title", replace(col("channel_title"), lit("  "), lit(" "))) \
-    .withColumn("channel_title", replace(col("channel_title"), lit("  "), lit(" "))) \
-    .withColumn("channel_title", replace(col("channel_title"), lit("  "), lit(" "))) 
-
-df_spark_unido = df_spark_unido.withColumn("tags", replace(col("tags"), lit("|"), lit(" "))) \
-    .withColumn("tags", replace(col("tags"), lit("\n"), lit(" "))) \
-    .withColumn("tags", replace(col("tags"), lit("\t"), lit(" "))) \
-    .withColumn("tags", replace(col("tags"), lit('"'), lit("")))
-
-df_spark_unido = df_spark_unido.withColumn("tags", trim(col("tags")))
-
-df_spark_unido = df_spark_unido \
-    .withColumn("tags", replace(col("tags"), lit("  "), lit(" "))) \
-    .withColumn("tags", replace(col("tags"), lit("  "), lit(" "))) \
-    .withColumn("tags", replace(col("tags"), lit("  "), lit(" ")))
-
-df_spark_unido = df_spark_unido.withColumn("tags", array_remove(split(col("tags"), " "), "")) 
-
-Ruta_limpia = ""
-ruta_salida_final = f"{Ruta_limpia}Dataset_limpio.parquet"
-df_spark_unido.toPandas().to_parquet(ruta_salida_final, index=False)
-
-spark.stop()
+dataframe_final.to_pickle(ruta_salida)
