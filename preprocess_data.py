@@ -67,7 +67,6 @@ dataframe_final["channel_title"] = (dataframe_final["channel_title"].str.strip()
 #En tags además separamos por "|" y lo guardamos como lista
 dataframe_final["tags"] = (dataframe_final["tags"].str.strip().str.split().str.join(" "))
 dataframe_final["tags"] = dataframe_final["tags"].str.replace('"', '', regex=False)#regex=False: busca el texto tal cual, sin tratarlo como expresión regular
-dataframe_final["tags"] = dataframe_final["tags"].str.replace('[none]', '', regex=False)
 dataframe_final["tags"] = (dataframe_final["tags"].str.strip().str.split("|", regex=False))
 dataframe_final["tags"] = dataframe_final["tags"].apply(lambda lista: [tag for tag in lista if tag != ""])#quitamos las etiquetas vacías
 
