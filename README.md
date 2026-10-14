@@ -86,7 +86,7 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Categoría:** Regresión Logística, Random Forest, KNN y SVM.
 - **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`.
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
-- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models y HDBSCAN, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad.
+- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models y HDBSCAN, con PCA, t-SNE, LDA y un autoencoder (MLPRegressor) como técnicas de reducción de dimensionalidad. Se clusteriza sobre PCA y sobre el autoencoder para comparar ambas reducciones.
 - **Recomendación:** TF-IDF con KNN.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
