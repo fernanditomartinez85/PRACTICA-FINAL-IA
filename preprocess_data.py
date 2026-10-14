@@ -1,10 +1,16 @@
+import argparse
 import os
 import pandas as pd
 
-#TANTO LOS ARCHIVOS BRUTOS COMO EL ARCHIVO LIMPIO SE ENCUENTRAN EN LA MISMA CARPETA QUE CONTIENE ESTE SCRIPT
+#Ejemplo de uso: python preprocess_data.py . datos_limpios.csv
 
-ruta_entrada = os.path.dirname(os.path.abspath(__file__))
-ruta_salida = os.path.join(ruta_entrada, "dataframe_final_limpio.pkl")
+parser = argparse.ArgumentParser(description="Limpieza y transformaciones comunes a todos los modelos.")
+parser.add_argument("ruta_entrada", help="carpeta con los datos en crudo (los ficheros XXvideos.csv y XX_category_id.json de cada país)")
+parser.add_argument("ruta_salida", help="ruta del fichero CSV donde se guardan los datos limpios")
+args = parser.parse_args()
+
+ruta_entrada = args.ruta_entrada
+ruta_salida = args.ruta_salida
 
 
 def actualizacion_categoria_pais(ruta_csv, ruta_json, nombre_pais):
@@ -70,4 +76,7 @@ dataframe_final["tags"] = dataframe_final["tags"].str.replace('"', '', regex=Fal
 dataframe_final["tags"] = (dataframe_final["tags"].str.strip().str.split("|", regex=False))
 dataframe_final["tags"] = dataframe_final["tags"].apply(lambda lista: [tag for tag in lista if tag != ""])#quitamos las etiquetas vacías
 
-dataframe_final.to_pickle(ruta_salida)
+#Un CSV no guarda listas, así que volvemos a juntar los tags limpios separados por "|"; las clases de models los separan al leerlos
+dataframe_final["tags"] = dataframe_final["tags"].str.join("|")
+
+dataframe_final.to_csv(ruta_salida, index=False)

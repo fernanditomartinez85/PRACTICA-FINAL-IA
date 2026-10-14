@@ -1,0 +1,10 @@
+# Ficheros que genera Python y Jupyter
+__pycache__/
+.ipynb_checkpoints/
+
+# Ficheros que generan los scripts (se vuelven a crear con preprocess_data.py y train_models.py)
+datos_limpios.csv
+pesos/
+
+# Lo genera el notebook al ejecutarse (pesa demasiado para GitHub)
+dataframe_final_limpio.pkl
