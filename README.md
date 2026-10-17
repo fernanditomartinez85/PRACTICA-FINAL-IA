@@ -93,7 +93,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 
 En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis exploratorio de los datos y, para cada problema, se comparan los modelos que aplican:
 
-- **Categoría:** Regresión Logística, Random Forest, KNN y SVM.
+- **Categoría:** Regresión Logística, Random Forest, KNN y SVM. El SVM se limita a 1.000 iteraciones para que no tarde horas, así que no llega a converger y sale el peor; la Regresión Logística usa `max_iter=1000` porque con las 100 por defecto no convergía.
 - **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`.
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
 - **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models y HDBSCAN, con PCA, t-SNE, LDA y un autoencoder (MLPRegressor) como técnicas de reducción de dimensionalidad. Se clusteriza sobre PCA y sobre el autoencoder para comparar ambas reducciones.
