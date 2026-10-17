@@ -27,7 +27,7 @@ class RFClassifier:
 
         #En Random Forest no hace falta logaritmo ni escalado: los árboles dividen por umbrales y no les afecta la magnitud
         self.preprocess = ColumnTransformer(transformers=[
-            ("encoder", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), self.CATEGORICAS),
+            ("encoder", OneHotEncoder(handle_unknown="ignore"), self.CATEGORICAS),#ignore: un país o categoría que no vio al entrenar se deja a 0 en vez de dar error
             ("numericas", "passthrough", self.NUMERICAS)])
 
         self.label_encoder = LabelEncoder()#pasa las categorías (texto) a números y al revés
