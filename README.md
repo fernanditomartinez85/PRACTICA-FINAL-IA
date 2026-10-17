@@ -1,4 +1,10 @@
-# Práctica final IA: YouTube Trending Videos
+# 📺 YouTube Trending Videos
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white) ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white) ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557c?style=flat-square) ![Seaborn](https://img.shields.io/badge/Seaborn-4c72b0?style=flat-square) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
+
+> Práctica final de IA: clasificación, regresión, clustering y recomendación sobre los vídeos en tendencia de YouTube.
+
+## 🎯 Objetivo
 
 A partir de los datos de los vídeos en tendencias diarias de YouTube de 10 países, se resuelven varios problemas de negocio con técnicas de machine learning:
 
@@ -7,7 +13,11 @@ A partir de los datos de los vídeos en tendencias diarias de YouTube de 10 paí
 - **Clusterización:** encontrar grupos en los vídeos con distintas técnicas, compararlos con las categorías y usar técnicas de reducción de dimensionalidad.
 - **Recomendación:** dado un vídeo, recomendar vídeos parecidos.
 
-## Estructura del proyecto
+## 📊 Datos
+
+Vídeos en tendencias diarias de YouTube de 10 países (CA, DE, FR, GB, IN, JP, KR, MX, RU, US). Por cada país hay un CSV con los vídeos (título, canal, fecha de publicación, tags, views, likes, dislikes, comentarios...) y un JSON con el nombre de cada categoría.
+
+## 🗂️ Estructura del proyecto
 
 ```
 ├── XXvideos.csv / XX_category_id.json   Datos en crudo de cada país (CA, DE, FR, GB, IN, JP, KR, MX, RU, US)
@@ -23,11 +33,11 @@ A partir de los datos de los vídeos en tendencias diarias de YouTube de 10 paí
     └── knn_recommender.py               KNNRecommender: recomendador de vídeos
 ```
 
-## Requisitos
+## ⚙️ Requisitos
 
 Python 3 con pandas, numpy, scikit-learn, matplotlib y seaborn (por ejemplo, el entorno `base` de Anaconda).
 
-## Ejecución
+## ▶️ Ejecución
 
 Todos los comandos se lanzan desde la carpeta del proyecto.
 
@@ -68,7 +78,7 @@ python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.cs
 
 Muestra los datos con una columna `prediccion` (categoría, likes o cluster). En el recomendador, muestra los vídeos recomendados para cada título.
 
-## Paquete models
+## 🤖 Modelo
 
 Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `load`, y un método privado `__preprocess_data` con las transformaciones propias del modelo. Esas transformaciones se ajustan en `fit` y se guardan en el pickle junto al modelo. `predict` acepta un DataFrame, un numpy array, una Series o un diccionario, así que sirve tanto para una observación como para un conjunto.
 
@@ -79,7 +89,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 | Clusterización | `KMeansClustering` | K-Means con k = 4 (codo y silhouette) | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,35 |
 | Recomendación | `KNNRecommender` | KNN con distancia del coseno sobre TF-IDF | Título, tags, canal y categoría unidos en un solo texto | 72 % de recomendaciones de la misma categoría (15 % al azar) |
 
-## Notebook
+## 📓 Notebook
 
 En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis exploratorio de los datos y, para cada problema, se comparan los modelos que aplican:
 
@@ -90,3 +100,10 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Recomendación:** TF-IDF con KNN.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
+
+## 💡 Conclusiones
+
+- **Likes:** se predicen muy bien (R2 0,945).
+- **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
+- **Clusterización:** K-Means con 4 grupos da la mejor separación (silhouette 0,35).
+- **Recomendación:** el 72 % de los vídeos recomendados son de la misma categoría que el original, frente al 15 % si se eligieran al azar.
