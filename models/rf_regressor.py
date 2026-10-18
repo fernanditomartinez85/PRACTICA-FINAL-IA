@@ -25,7 +25,7 @@ class RFRegressor:
         #En Random Forest no hace falta logaritmo ni escalado en las X: los árboles dividen por umbrales
         self.preprocess = ColumnTransformer(transformers=[
             ("encoder", OneHotEncoder(handle_unknown="ignore"), self.CATEGORICAS),#ignore: un país o categoría que no vio al entrenar se deja a 0 en vez de dar error
-            ("numericas", "passthrough", self.NUMERICAS)])
+            ("numericas", "passthrough", self.NUMERICAS)])#"passthrough": esas columnas pasan tal cual al modelo, sin transformar
 
     def fit(self, X, y):
         """Entrena el modelo. X: DataFrame o numpy array con las columnas de COLUMNAS. y: likes de cada vídeo."""
