@@ -2,7 +2,7 @@ import argparse
 
 import pandas as pd
 
-from models.kmeans_clustering import KMeansClustering
+from models.gmm_clustering import GMMClustering
 from models.knn_recommender import KNNRecommender
 from models.rf_classifier import RFClassifier
 from models.rf_regressor import RFRegressor
@@ -12,7 +12,7 @@ from models.rf_regressor import RFRegressor
 MODELOS = {
     "rf_classifier": RFClassifier,#predice la categoría
     "rf_regressor": RFRegressor,#predice los likes
-    "kmeans_clustering": KMeansClustering,#asigna el cluster
+    "gmm_clustering": GMMClustering,#asigna el grupo
     "knn_recommender": KNNRecommender#recomienda vídeos parecidos a los títulos del fichero
 }
 
