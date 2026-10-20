@@ -85,7 +85,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 | Problema | Clase | Modelo elegido | Transformaciones | Resultado en test |
 |---|---|---|---|---|
 | Categoría | `RFClassifier` | Random Forest optimizado con RandomizedSearchCV | One-hot de pais | F1 macro 0,32, accuracy 0,39 |
-| Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category; logaritmo de los likes | R2 0,945, MAE ≈ 4.800 likes |
+| Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category (sin logaritmo ni escalado: los árboles no lo necesitan) | R2 0,949, MAE ≈ 4.900 likes |
 | Clusterización | `KMeansClustering` | K-Means con k = 4 (codo y silhouette) | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,35 |
 | Recomendación | `KNNRecommender` | KNN con distancia del coseno sobre TF-IDF | Título, tags, canal y categoría unidos en un solo texto | 72 % de recomendaciones de la misma categoría (15 % al azar) |
 
@@ -103,7 +103,7 @@ Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y 
 
 ## 💡 Conclusiones
 
-- **Likes:** se predicen muy bien (R2 0,945).
+- **Likes:** se predicen muy bien (R2 0,949).
 - **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
 - **Clusterización:** K-Means con 4 grupos da la mejor separación (silhouette 0,35).
 - **Recomendación:** el 72 % de los vídeos recomendados son de la misma categoría que el original, frente al 15 % si se eligieran al azar.

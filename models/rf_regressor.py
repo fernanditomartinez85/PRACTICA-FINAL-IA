@@ -10,7 +10,7 @@ from sklearn.preprocessing import OneHotEncoder
 class RFRegressor:
     """Random Forest para predecir el número de likes.
 
-    Es el mejor modelo del apartado de predicción de likes (R2 en test de 0,945). El optimizado con RandomizedSearchCV
+    Es el mejor modelo del apartado de predicción de likes (R2 en test de 0,949). El optimizado con RandomizedSearchCV
     salió algo peor, por lo que usamos los parámetros por defecto.
     Se entrena solo con vídeos que tienen los ratings activados (ratings_disabled == False), ya que si no los likes valen 0.
     """
@@ -30,13 +30,13 @@ class RFRegressor:
     def fit(self, X, y):
         """Entrena el modelo. X: DataFrame o numpy array con las columnas de COLUMNAS. y: likes de cada vídeo."""
         X_procesado = self.__preprocess_data(X, entrenar=True)
-        self.modelo.fit(X_procesado, self.__transformar_y(y))
+        self.modelo.fit(X_procesado, np.ravel(y))#los likes tal cual, como en el notebook
         return self
 
     def predict(self, X):
         """Devuelve el número de likes de uno o varios vídeos."""
         X_procesado = self.__preprocess_data(X, entrenar=False)
-        return self.__deshacer_y(self.modelo.predict(X_procesado))
+        return self.modelo.predict(X_procesado)
 
     def save(self, ruta):
         """Guarda en disco (pickle) el estado de la clase: modelo y preprocess."""
@@ -69,11 +69,3 @@ class RFRegressor:
         if entrenar:
             return self.preprocess.fit_transform(X)
         return self.preprocess.transform(X)
-
-    def __transformar_y(self, y):
-        """Los likes están muy sesgados, así que entrenamos con log1p(likes), igual que con TransformedTargetRegressor."""
-        return np.log1p(np.ravel(y).astype(float))
-
-    def __deshacer_y(self, y_log):
-        """Deshace el logaritmo para que las predicciones vuelvan a estar en número de likes."""
-        return np.expm1(y_log)
