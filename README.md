@@ -29,7 +29,7 @@ Vídeos en tendencias diarias de YouTube de 10 países (CA, DE, FR, GB, IN, JP, 
 └── models/                              Paquete con los modelos industrializados
     ├── rf_classifier.py                 RFClassifier: categoría del vídeo
     ├── rf_regressor.py                  RFRegressor: número de likes
-    ├── gmm_clustering.py                GMMClustering: grupos de vídeos
+    ├── kmeans_clustering.py             KMeansClustering: grupos de vídeos
     └── knn_recommender.py               KNNRecommender: recomendador de vídeos
 ```
 
@@ -72,7 +72,7 @@ python inference_model.py <modelo> <pesos.pkl> <datos.csv>
 python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.csv
 ```
 
-- `modelo`: `rf_classifier`, `rf_regressor`, `gmm_clustering` o `knn_recommender`.
+- `modelo`: `rf_classifier`, `rf_regressor`, `kmeans_clustering` o `knn_recommender`.
 - `pesos`: el pickle guardado por train_models.py.
 - `datos`: fichero .csv o .pkl con las mismas columnas que los datos limpios. Para el recomendador basta con una columna title con los títulos de los vídeos para los que queremos recomendaciones.
 
@@ -86,7 +86,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 |---|---|---|---|---|
 | Categoría | `RFClassifier` | Random Forest optimizado con RandomizedSearchCV | One-hot de pais | F1 macro 0,32, accuracy 0,39 |
 | Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category (sin logaritmo ni escalado: los árboles no lo necesitan) | R2 0,949, MAE ≈ 4.900 likes |
-| Clusterización | `GMMClustering` | GMM con 3 grupos (elegidos con la silhouette) | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y autoencoder a 2 dimensiones | Silhouette 0,67 |
+| Clusterización | `KMeansClustering` | K-Means con k = 4 (elegido con la silhouette) | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,35 |
 | Recomendación | `KNNRecommender` | KNN con distancia del coseno sobre TF-IDF | Título, tags, canal y categoría unidos en un solo texto | 72 % de recomendaciones de la misma categoría (15 % al azar) |
 
 ## 📓 Notebook
@@ -96,7 +96,7 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Categoría:** Regresión Logística, Random Forest, KNN y SVM. El SVM se limita a 1.000 iteraciones para que no tarde horas, así que no llega a converger y sale el peor; la Regresión Logística usa `max_iter=1000` porque con las 100 por defecto no convergía.
 - **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`.
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
-- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE, LDA y un autoencoder (MLPRegressor) como técnicas de reducción de dimensionalidad. Se clusteriza sobre PCA y sobre el autoencoder para comparar ambas reducciones, con todos los vídeos (salvo t-SNE, que solo se usa para dibujar y se hace con 10.000 al azar porque con todos tarda unos 25 minutos); se evalúa con la silhouette (sobre 10.000 vídeos al azar, porque con todos tardaría horas) y el ARI.
+- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad. Las reducciones se comparan con la trustworthiness (si mantienen juntos a los vídeos parecidos) y la correlación de distancias (si respetan lo lejos o cerca que están), y se clusteriza sobre PCA, con todos los vídeos (salvo t-SNE, que solo se usa para dibujar y se hace con 10.000 al azar porque con todos tarda unos 25 minutos); se evalúa con la silhouette (sobre 10.000 vídeos al azar, porque con todos tardaría horas) y el ARI.
 - **Recomendación:** TF-IDF con KNN.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
@@ -105,5 +105,5 @@ Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y 
 
 - **Likes:** se predicen muy bien (R2 0,949).
 - **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
-- **Clusterización:** GMM con 3 grupos sobre el autoencoder da la mejor separación (silhouette 0,67), pero los grupos no tienen relación con las categorías (ARI cercano a 0).
+- **Clusterización:** K-Means con 4 grupos sobre PCA da la mejor separación (silhouette 0,35), pero los grupos no tienen relación con las categorías (ARI cercano a 0).
 - **Recomendación:** el 72 % de los vídeos recomendados son de la misma categoría que el original, frente al 15 % si se eligieran al azar.

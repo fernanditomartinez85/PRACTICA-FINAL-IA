@@ -4,7 +4,7 @@ import os
 
 import pandas as pd
 
-from models.gmm_clustering import GMMClustering
+from models.kmeans_clustering import KMeansClustering
 from models.knn_recommender import KNNRecommender
 from models.rf_classifier import RFClassifier
 from models.rf_regressor import RFRegressor
@@ -48,9 +48,9 @@ rf_regressor.fit(df_likes, df_likes["likes"])
 guardar(rf_regressor, "rf_regressor")
 
 #Clusterización: con todos los vídeos, igual que en el notebook
-gmm_clustering = GMMClustering()
-gmm_clustering.fit(df)
-guardar(gmm_clustering, "gmm_clustering")
+kmeans_clustering = KMeansClustering()
+kmeans_clustering.fit(df)
+guardar(kmeans_clustering, "kmeans_clustering")
 
 #Recomendador
 knn_recommender = KNNRecommender()
