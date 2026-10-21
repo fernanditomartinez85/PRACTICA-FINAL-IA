@@ -96,7 +96,7 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Categoría:** Regresión Logística, Random Forest, KNN y SVM. El SVM se limita a 1.000 iteraciones para que no tarde horas, así que no llega a converger y sale el peor; la Regresión Logística usa `max_iter=1000` porque con las 100 por defecto no convergía.
 - **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`.
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
-- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE, LDA y un autoencoder (MLPRegressor) como técnicas de reducción de dimensionalidad. Se clusteriza sobre PCA y sobre el autoencoder para comparar ambas reducciones, con todos los vídeos; se evalúa con la silhouette (sobre 10.000 vídeos al azar, porque con todos tardaría horas) y el ARI.
+- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE, LDA y un autoencoder (MLPRegressor) como técnicas de reducción de dimensionalidad. Se clusteriza sobre PCA y sobre el autoencoder para comparar ambas reducciones, con todos los vídeos (salvo t-SNE, que solo se usa para dibujar y se hace con 10.000 al azar porque con todos tarda unos 25 minutos); se evalúa con la silhouette (sobre 10.000 vídeos al azar, porque con todos tardaría horas) y el ARI.
 - **Recomendación:** TF-IDF con KNN.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
