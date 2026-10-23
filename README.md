@@ -86,7 +86,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 |---|---|---|---|---|
 | Categoría | `RFClassifier` | Random Forest optimizado con RandomizedSearchCV | One-hot de pais | F1 macro 0,32, accuracy 0,39 |
 | Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category (sin logaritmo ni escalado: los árboles no lo necesitan) | R2 0,949, MAE ≈ 4.900 likes |
-| Clusterización | `KMeansClustering` | K-Means con k = 4 (elegido con la silhouette) | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,35 |
+| Clusterización | `KMeansClustering` | K-Means optimizado con GridSearchCV: 2 grupos y el resto de parámetros por defecto | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,41 |
 | Recomendación | `KNNRecommender` | KNN con distancia del coseno sobre TF-IDF | Título, tags, canal y categoría unidos en un solo texto | 72 % de recomendaciones de la misma categoría (15 % al azar) |
 
 ## 📓 Notebook
@@ -96,7 +96,9 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Categoría:** Regresión Logística, Random Forest, KNN y SVM. El SVM se limita a 1.000 iteraciones para que no tarde horas, así que no llega a converger y sale el peor; la Regresión Logística usa `max_iter=1000` porque con las 100 por defecto no convergía.
 - **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`.
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
-- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad. Las reducciones se comparan con la trustworthiness (si mantienen juntos a los vídeos parecidos) y la correlación de distancias (si respetan lo lejos o cerca que están), y se clusteriza sobre PCA, con todos los vídeos (salvo t-SNE, que solo se usa para dibujar y se hace con 10.000 al azar porque con todos tarda unos 25 minutos); se evalúa con la silhouette (sobre 10.000 vídeos al azar, porque con todos tardaría horas) y el ARI.
+- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad. Las reducciones se comparan con la trustworthiness (si mantienen juntos a los vídeos parecidos) y la correlación de distancias (si respetan lo lejos o cerca que están), y se clusteriza sobre PCA, con todos los vídeos. Cada modelo se entrena primero con los valores por defecto de su clase, salvo cuando no es viable: DBSCAN con eps=0,5 no cabe en memoria (eps se elige con la curva de distancias al vecino número 5) y Mean-Shift tardaría horas (bin_seeding=True y bandwidth estimado con 10.000 vídeos; como en SVM, se ajusta para que tarde poco porque mete todos los vídeos en un solo grupo y no iba a ser el elegido). Se evalúa con la silhouette y el ARI; el mejor (K-Means) se optimiza con GridSearchCV.
+
+  Muestras de 10.000 vídeos al azar, cada una justificada en el notebook: t-SNE (solo se usa para dibujar; con todos tarda unos 25 minutos), la comparación de reducciones (con todos necesitaría más de 170 GB de memoria) y la silhouette (con todos tarda unos 8 minutos por cálculo y da prácticamente lo mismo: 0,349 frente a 0,347). La evaluación del recomendador usa 1.000 vídeos (con todos tardaría unos 14 minutos y sale lo mismo, en torno al 72 %).
 - **Recomendación:** TF-IDF con KNN.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
@@ -105,5 +107,5 @@ Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y 
 
 - **Likes:** se predicen muy bien (R2 0,949).
 - **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
-- **Clusterización:** K-Means con 4 grupos sobre PCA da la mejor separación (silhouette 0,35), pero los grupos no tienen relación con las categorías (ARI cercano a 0).
+- **Clusterización:** K-Means optimizado (2 grupos) sobre PCA da la mejor separación (silhouette 0,41): separa los vídeos más populares de los menos populares, pero los grupos no tienen relación con las categorías (ARI cercano a 0).
 - **Recomendación:** el 72 % de los vídeos recomendados son de la misma categoría que el original, frente al 15 % si se eligieran al azar.

@@ -9,16 +9,17 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 
 class KMeansClustering:
-    """K-Means con 4 clusters sobre las 2 componentes de PCA.
+    """K-Means con 2 clusters sobre las 2 componentes de PCA.
 
-    Es el mejor modelo del apartado de clusterización (silhouette de 0,35).
+    Es el mejor modelo del apartado de clusterización, optimizado con GridSearchCV (silhouette de 0,41).
+    El resto de parámetros son los de por defecto, que fueron los mejores en la búsqueda.
     """
 
     COLUMNAS = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "tags", "title", "channel_title"]
     VARIABLES_CLUSTER = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "n_tags", "longitud_titulo", "n_videos_canal"]
 
-    def __init__(self, n_clusters=4, n_components=2, random_state=42):
-        self.modelo = KMeans(n_clusters=n_clusters, n_init=10, random_state=random_state)
+    def __init__(self, n_clusters=2, n_components=2, random_state=42):
+        self.modelo = KMeans(n_clusters=n_clusters, random_state=random_state)
 
         #Logaritmo y escalado para tratar los outliers, y PCA para reducir a 2 componentes antes de clusterizar
         self.preprocess = Pipeline([("log", FunctionTransformer(np.log1p)),
