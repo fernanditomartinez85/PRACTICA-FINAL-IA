@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import pandas as pd
 
@@ -8,6 +9,10 @@ from models.rf_classifier import RFClassifier
 from models.rf_regressor import RFRegressor
 
 #Ejemplo de uso: python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.csv
+
+#hay títulos en ruso, coreano, japonés...: sin esto, en Windows, al guardar la salida en un fichero
+#(python inference_model.py ... > salida.txt) da UnicodeEncodeError
+sys.stdout.reconfigure(encoding="utf-8")
 
 MODELOS = {
     "rf_classifier": RFClassifier,#predice la categoría

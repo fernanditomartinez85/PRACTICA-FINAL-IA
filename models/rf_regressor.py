@@ -20,7 +20,7 @@ class RFRegressor:
     NUMERICAS = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"]
 
     def __init__(self, random_state=42):
-        self.modelo = RandomForestRegressor(random_state=random_state)
+        self.modelo = RandomForestRegressor(random_state=random_state, n_jobs=-1)#todos los núcleos para tardar menos; el resultado es el mismo
 
         #En Random Forest no hace falta logaritmo ni escalado en las X: los árboles dividen por umbrales
         self.preprocess = ColumnTransformer(transformers=[

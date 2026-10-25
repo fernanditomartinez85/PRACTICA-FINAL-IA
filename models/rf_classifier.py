@@ -23,7 +23,8 @@ class RFClassifier:
         self.modelo = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion, max_depth=max_depth,
                                              min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
                                              max_features=max_features, class_weight=class_weight, bootstrap=True,
-                                             max_samples=max_samples, random_state=random_state)
+                                             max_samples=max_samples, random_state=random_state,
+                                             n_jobs=-1)#todos los núcleos para tardar menos; el resultado es el mismo
 
         #En Random Forest no hace falta logaritmo ni escalado: los árboles dividen por umbrales y no les afecta la magnitud
         self.preprocess = ColumnTransformer(transformers=[

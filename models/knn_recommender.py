@@ -8,7 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 class KNNRecommender:
     """Recomendador basado en contenido: TF-IDF sobre título, tags, canal y categoría, y KNN con la distancia del coseno.
 
-    Es el modelo del apartado del recomendador (72 % de recomendaciones de la misma categoría frente al 15 % al azar).
+    Es el modelo del apartado del recomendador (72,5 % de recomendaciones de la misma categoría frente al 15 % al azar).
     """
 
     COLUMNAS = ["title", "tags", "channel_title", "category", "pais", "views"]
