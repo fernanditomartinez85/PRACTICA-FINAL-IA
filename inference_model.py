@@ -36,9 +36,11 @@ modelo = MODELOS[args.modelo]()
 modelo.load(args.pesos)
 
 if args.modelo == "knn_recommender":
-    #el recomendador recibe títulos: recomendamos para cada título de la columna title
-    for titulo, recomendaciones in zip(datos["title"], modelo.predict(list(datos["title"]))):
-        print(f"\nRecomendaciones para: {titulo}")
+    #el recomendador recibe el título, el canal o la categoría de cada vídeo (basta con uno de los tres)
+    columnas = [c for c in ["title", "channel_title", "category"] if c in datos.columns]
+    for (_, fila), recomendaciones in zip(datos.iterrows(), modelo.predict(datos)):
+        indicado = " | ".join(f"{c}: {fila[c]}" for c in columnas if fila[c] != "")
+        print(f"\nRecomendaciones para: {indicado}")
         if recomendaciones is not None:
             print(recomendaciones.to_string(index=False))
 else:

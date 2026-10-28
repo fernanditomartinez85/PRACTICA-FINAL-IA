@@ -74,9 +74,9 @@ python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.cs
 
 - `modelo`: `rf_classifier`, `rf_regressor`, `kmeans_clustering` o `knn_recommender`.
 - `pesos`: el pickle guardado por train_models.py.
-- `datos`: fichero .csv o .pkl con las mismas columnas que los datos limpios. Para el recomendador basta con una columna title con los títulos de los vídeos para los que queremos recomendaciones.
+- `datos`: fichero .csv o .pkl con las mismas columnas que los datos limpios. Para el recomendador basta con alguna de las columnas title, channel_title o category de los vídeos para los que queremos recomendaciones (se busca el vídeo más visto que cumpla las que vengan).
 
-Muestra los datos con una columna `prediccion` (categoría, likes o cluster). En el recomendador, muestra los vídeos recomendados para cada título.
+Muestra los datos con una columna `prediccion` (categoría, likes o cluster). En el recomendador, muestra los vídeos recomendados para cada vídeo indicado.
 
 ## 🤖 Modelo
 
@@ -87,7 +87,7 @@ Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `
 | Categoría | `RFClassifier` | Random Forest optimizado con RandomizedSearchCV | One-hot de pais | F1 macro 0,32, accuracy 0,39 |
 | Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category (sin logaritmo ni escalado: los árboles no lo necesitan) | R2 0,949, MAE ≈ 4.900 likes |
 | Clusterización | `KMeansClustering` | K-Means optimizado con GridSearchCV: 2 grupos y el resto de parámetros por defecto | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,41 |
-| Recomendación | `KNNRecommender` | KNN con distancia del coseno sobre TF-IDF | Título, tags, canal y categoría unidos en un solo texto | 72,5 % de recomendaciones de la misma categoría (15 % al azar) |
+| Recomendación | `KNNRecommender` | Vecinos más cercanos con la suma de las distancias del coseno de título, tags y canal, saltando los que tienen un título demasiado parecido (similitud > 0,5) a una recomendación ya elegida | One hot (MultiLabelBinarizer) de las palabras del título, los tags y el canal, con cada fila normalizada | Pruebas con uno, dos y tres datos (título, canal y categoría): las recomendaciones siguen el tema del vídeo elegido |
 
 ## 📓 Notebook
 
@@ -99,8 +99,8 @@ En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis
 - **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
 - **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad. Las reducciones se comparan con la trustworthiness (si mantienen juntos a los vídeos parecidos) y la correlación de distancias (si respetan lo lejos o cerca que están), y se clusteriza sobre PCA, con todos los vídeos. t-SNE, que solo se usa para dibujar, va con n_iter=250, perplexity=10, angle=0.8 y n_jobs=-1: por defecto tardaba 20,5 min y así unos 3, y PCA sigue siendo la elegida. Cada modelo se entrena primero con los valores por defecto de su clase, salvo el eps de DBSCAN: con el de por defecto (0,5) da error de memoria, así que se elige con la curva de distancia al 5º vecino; y Mean-Shift, que por defecto tardó 6 h 43 min y formó un solo grupo, así que se le calcula el bandwidth con 10.000 vídeos y se usa bin_seeding para que tarde segundos. Se evalúa con la silhouette y el ARI; el mejor (K-Means) se optimiza con GridSearchCV.
 
-  Muestras de 10.000 vídeos al azar, cada una justificada en el notebook: la comparación de reducciones (con todos necesitaría más de 170 GB de memoria) y la silhouette dentro del GridSearchCV de K-Means (con todos tarda unos 8 minutos por cálculo y da prácticamente lo mismo: 0,349 frente a 0,347; las tablas comparativas sí la calculan con todos los vídeos). La evaluación del recomendador usa 1.000 vídeos (con todos tarda unos 27 minutos y sale un 72,5 %; con distintas muestras de 1.000, entre el 71 % y el 75 %).
-- **Recomendación:** TF-IDF con KNN.
+  Muestras de 10.000 vídeos al azar, cada una justificada en el notebook: la comparación de reducciones (con todos necesitaría más de 170 GB de memoria) y la silhouette dentro del GridSearchCV de K-Means (con todos tarda unos 8 minutos por cálculo y da prácticamente lo mismo: 0,349 frente a 0,347; las tablas comparativas sí la calculan con todos los vídeos).
+- **Recomendación:** como en el ejemplo de recomendador de películas con KNN, one hot de las palabras del título, los tags y el canal, distancia del coseno de cada variable sumada y los 10 vídeos más cercanos. Para que no recomiende muchas versiones del mismo vídeo, se eligen de uno en uno y se salta cualquiera cuyo título se parezca demasiado al de uno ya elegido. La categoría no se usa para buscar los vecinos (la elige el creador y no siempre corresponde al contenido); el título, el canal y la categoría sirven para elegir el vídeo del que se parte.
 
 Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
 
@@ -109,4 +109,4 @@ Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y 
 - **Likes:** se predicen muy bien (R2 0,949).
 - **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
 - **Clusterización:** K-Means optimizado (2 grupos) sobre PCA da la mejor separación (silhouette 0,41): separa los vídeos más populares de los menos populares, pero los grupos no tienen relación con las categorías (ARI cercano a 0).
-- **Recomendación:** el 72,5 % de los vídeos recomendados son de la misma categoría que el original, frente al 15 % si se eligieran al azar.
+- **Recomendación:** recomienda vídeos del mismo tema que el elegido (la misma canción o el mismo artista); indicar más datos (título, canal y categoría) ayuda a partir del vídeo que queremos. Saltando los títulos demasiado parecidos a uno ya elegido, recomienda menos versiones del mismo vídeo y más vídeos distintos del mismo artista o estilo, aunque a veces se salta un vídeo bueno con un título de formato parecido.
