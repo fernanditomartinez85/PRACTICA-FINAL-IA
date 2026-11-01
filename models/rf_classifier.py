@@ -1,9 +1,10 @@
+import pickle
+
 import numpy as np
+import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-
-from models.utils import a_dataframe, cargar, guardar
 
 
 class RFClassifier:
@@ -33,11 +34,24 @@ class RFClassifier:
         return self.label_encoder.inverse_transform(self.modelo.predict(self.__preprocess_data(X, entrenar=False)))
 
     def save(self, ruta):
-        guardar(self, ruta)
+        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
+        with open(ruta, "wb") as f:
+            pickle.dump(self.__dict__, f)
 
     def load(self, ruta):
-        return cargar(self, ruta)
+        """Recupera el estado guardado con save, para predecir sin reentrenar."""
+        with open(ruta, "rb") as f:
+            self.__dict__.update(pickle.load(f))
+        return self
+
+    def __a_dataframe(self, X):
+        """Pasa a DataFrame un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)."""
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.COLUMNAS)), columns=self.COLUMNAS)
+        return X[self.COLUMNAS]
 
     def __preprocess_data(self, X, entrenar):
-        X = a_dataframe(X, self.COLUMNAS).astype({col: float for col in self.NUMERICAS})
+        X = self.__a_dataframe(X).astype({col: float for col in self.NUMERICAS})
         return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)

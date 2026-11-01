@@ -1,7 +1,8 @@
+import pickle
+
+import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer, normalize
-
-from models.utils import a_dataframe, cargar, guardar
 
 
 class KNNRecommender:
@@ -26,7 +27,7 @@ class KNNRecommender:
 
     def fit(self, X, y=None):
         #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
-        videos = a_dataframe(X, self.COLUMNAS).sort_values(by="views", ascending=False)
+        videos = self.__a_dataframe(X).sort_values(by="views", ascending=False)
         self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
         self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)
         return self
@@ -43,10 +44,23 @@ class KNNRecommender:
         return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
 
     def save(self, ruta):
-        guardar(self, ruta)
+        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
+        with open(ruta, "wb") as f:
+            pickle.dump(self.__dict__, f)
 
     def load(self, ruta):
-        return cargar(self, ruta)
+        """Recupera el estado guardado con save, para predecir sin reentrenar."""
+        with open(ruta, "rb") as f:
+            self.__dict__.update(pickle.load(f))
+        return self
+
+    def __a_dataframe(self, X):
+        """Pasa a DataFrame un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)."""
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.COLUMNAS)), columns=self.COLUMNAS)
+        return X[self.COLUMNAS]
 
     def __lista_tags(self, tags):
         if isinstance(tags, str):#del CSV vienen separados por "|"
