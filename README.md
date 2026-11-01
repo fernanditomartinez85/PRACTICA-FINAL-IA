@@ -1,112 +1,39 @@
 # 📺 YouTube Trending Videos
 
-![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white) ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white) ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557c?style=flat-square) ![Seaborn](https://img.shields.io/badge/Seaborn-4c72b0?style=flat-square) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![pandas](https://img.shields.io/badge/pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=flat-square&logo=scikitlearn&logoColor=white) ![Jupyter](https://img.shields.io/badge/Jupyter-F37626?style=flat-square&logo=jupyter&logoColor=white)
 
-> Práctica final de IA: clasificación, regresión, clustering y recomendación sobre los vídeos en tendencia de YouTube.
+Práctica final de IA con los vídeos en tendencia de YouTube de 10 países: predecir la categoría y los likes de un vídeo, agrupar los vídeos y recomendar vídeos parecidos.
 
-## 🎯 Objetivo
-
-A partir de los datos de los vídeos en tendencias diarias de YouTube de 10 países, se resuelven varios problemas de negocio con técnicas de machine learning:
-
-- **Clasificación:** predecir la categoría del vídeo. Como reto opcional, predecir si el creador desactivará los comentarios o los ratings (solo en el notebook).
-- **Regresión:** predecir el número de likes.
-- **Clusterización:** encontrar grupos en los vídeos con distintas técnicas, compararlos con las categorías y usar técnicas de reducción de dimensionalidad.
-- **Recomendación:** dado un vídeo, recomendar vídeos parecidos.
-
-## 📊 Datos
-
-Vídeos en tendencias diarias de YouTube de 10 países (CA, DE, FR, GB, IN, JP, KR, MX, RU, US). Por cada país hay un CSV con los vídeos (título, canal, fecha de publicación, tags, views, likes, dislikes, comentarios...) y un JSON con el nombre de cada categoría.
-
-## 🗂️ Estructura del proyecto
+## 🗂️ Estructura
 
 ```
-├── XXvideos.csv / XX_category_id.json   Datos en crudo de cada país (CA, DE, FR, GB, IN, JP, KR, MX, RU, US)
-├── exploratory_analysis.ipynb           Análisis exploratorio, comparación de modelos y búsqueda de hiperparámetros
-├── preprocess_data.py                   Limpieza y transformaciones comunes a todos los modelos
-├── train_models.py                      Entrena los modelos y los guarda en disco
-├── inference_model.py                   Carga un modelo entrenado y hace inferencia sobre nuevos datos
-├── train.conf                           Configuración de rutas para train_models.py
-└── models/                              Paquete con los modelos industrializados
-    ├── rf_classifier.py                 RFClassifier: categoría del vídeo
-    ├── rf_regressor.py                  RFRegressor: número de likes
-    ├── kmeans_clustering.py             KMeansClustering: grupos de vídeos
-    └── knn_recommender.py               KNNRecommender: recomendador de vídeos
+├── exploratory_analysis.ipynb   Análisis exploratorio, comparación de modelos y conclusiones
+├── preprocess_data.py           Limpieza de los datos en crudo
+├── train_models.py              Entrena los modelos y los guarda
+├── inference_model.py           Usa un modelo guardado con datos nuevos
+├── train.conf                   Rutas de los datos y de los modelos
+└── models/                      Una clase por modelo (fit, predict, save, load)
 ```
 
-## ⚙️ Requisitos
+## ▶️ Uso
 
-Python 3 con pandas, numpy, scikit-learn, matplotlib y seaborn (por ejemplo, el entorno `base` de Anaconda).
-
-## ▶️ Ejecución
-
-Todos los comandos se lanzan desde la carpeta del proyecto.
-
-**1. Preprocesamiento**
+Con Python 3, pandas y scikit-learn (por ejemplo, Anaconda), desde la carpeta del proyecto:
 
 ```
-python preprocess_data.py <carpeta_datos_crudos> <fichero_salida.csv>
 python preprocess_data.py . datos_limpios.csv
-```
-
-Recibe la carpeta con los datos en crudo y la ruta del CSV de salida. Realiza los pasos comunes a todos los modelos:
-
-- Cruza el CSV de cada país con su JSON para sustituir category_id por el nombre de la categoría.
-- Junta los datos de todos los países en uno solo, con una nueva columna pais.
-- Elimina duplicados, nulos, columnas sin información útil (video_id, thumbnail_link, description, video_error_or_removed) y las categorías con muy pocos vídeos (Trailers, Movies, Nonprofits & Activism).
-- Deja un único registro por vídeo y país (el de más views), ya que un mismo vídeo aparece en tendencias varios días.
-- Crea dias_desde_publicacion: días desde que se publicó el vídeo hasta que fue tendencia por primera vez.
-- Limpia los espacios de title, channel_title y tags.
-
-**2. Entrenamiento**
-
-```
 python train_models.py train.conf
-```
-
-Lee de [train.conf](train.conf) la ruta de los datos limpios (sección `[datos]`) y la ruta donde guardar el pickle de cada modelo (una sección por modelo). Las rutas relativas se toman desde la carpeta de train.conf. Entrena cada modelo con `fit` y lo guarda con `save`.
-
-**3. Inferencia**
-
-```
-python inference_model.py <modelo> <pesos.pkl> <datos.csv>
 python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.csv
 ```
 
-- `modelo`: `rf_classifier`, `rf_regressor`, `kmeans_clustering` o `knn_recommender`.
-- `pesos`: el pickle guardado por train_models.py.
-- `datos`: fichero .csv o .pkl con las mismas columnas que los datos limpios. Para el recomendador basta con alguna de las columnas title, channel_title o category de los vídeos para los que queremos recomendaciones (se busca el vídeo más visto que cumpla las que vengan).
+En la inferencia, el modelo puede ser `rf_classifier`, `rf_regressor`, `kmeans_clustering` o `knn_recommender`. Para el recomendador basta con indicar el título, el canal o la categoría de los vídeos.
 
-Muestra los datos con una columna `prediccion` (categoría, likes o cluster). En el recomendador, muestra los vídeos recomendados para cada vídeo indicado.
+## 🤖 Modelos y resultados
 
-## 🤖 Modelo
+| Problema | Modelo | Resultado |
+|---|---|---|
+| Categoría | Random Forest optimizado | F1 macro 0,32 |
+| Likes | Random Forest | R2 0,949 |
+| Grupos de vídeos | K-Means (2 grupos) sobre PCA | Silhouette 0,41 |
+| Recomendación | Vídeos más parecidos en título, tags y canal, sin repetir versiones del mismo vídeo | Recomienda la misma canción o el mismo artista |
 
-Cada clase tiene los métodos públicos `__init__`, `fit`, `predict`, `save` y `load`, y un método privado `__preprocess_data` con las transformaciones propias del modelo. Esas transformaciones se ajustan en `fit` y se guardan en el pickle junto al modelo. `predict` acepta un DataFrame, un numpy array, una Series o un diccionario, así que sirve tanto para una observación como para un conjunto.
-
-| Problema | Clase | Modelo elegido | Transformaciones | Resultado en test |
-|---|---|---|---|---|
-| Categoría | `RFClassifier` | Random Forest optimizado con RandomizedSearchCV | One-hot de pais | F1 macro 0,32, accuracy 0,39 |
-| Likes | `RFRegressor` | Random Forest con parámetros por defecto (el optimizado salió algo peor) | One-hot de pais y category (sin logaritmo ni escalado: los árboles no lo necesitan) | R2 0,949, MAE ≈ 4.900 likes |
-| Clusterización | `KMeansClustering` | K-Means optimizado con GridSearchCV: 2 grupos y el resto de parámetros por defecto | Nuevas variables (n_tags, longitud_titulo, n_videos_canal), logaritmo, escalado y PCA a 2 componentes | Silhouette 0,41 |
-| Recomendación | `KNNRecommender` | Vecinos más cercanos con la suma de las distancias del coseno de título, tags y canal, saltando los que tienen un título demasiado parecido (similitud > 0,5) a una recomendación ya elegida | One hot (MultiLabelBinarizer) de las palabras del título, los tags y el canal, con cada fila normalizada | Pruebas con uno, dos y tres datos (título, canal y categoría): las recomendaciones siguen el tema del vídeo elegido |
-
-## 📓 Notebook
-
-En [exploratory_analysis.ipynb](exploratory_analysis.ipynb) se hace el análisis exploratorio de los datos y, para cada problema, se comparan los modelos que aplican:
-
-- **Categoría:** Regresión Logística, Random Forest, KNN y SVM. La Regresión Logística usa `max_iter=1000` porque con las 100 por defecto no convergía. El SVM usa `max_iter=1000`: por defecto tardaba 39,5 min; así tarda unos 7, aunque no llega a terminar de ajustarse y el modelo elegido no cambia.
-- **Reto opcional (comentarios o ratings desactivados):** Regresión Logística, Random Forest, KNN y SVM. Se estudia con la matriz de confusión el sesgo hacia la clase mayoritaria y se mitiga con GridSearchCV y `class_weight="balanced"`. El SVM usa `max_iter=1000`, igual que en categoría, porque por defecto tardaba 12,6 min.
-- Los Random Forest usan `n_jobs=-1` (todos los núcleos) para tardar menos; el resultado es el mismo.
-- **Likes:** Regresión Lineal, Perceptrón Multicapa y Random Forest.
-- **Clusterización:** K-Means, DBSCAN, Gaussian Mixture Models, HDBSCAN y Mean-Shift, con PCA, t-SNE y LDA como técnicas de reducción de dimensionalidad. Las reducciones se comparan con la trustworthiness (si mantienen juntos a los vídeos parecidos) y la correlación de distancias (si respetan lo lejos o cerca que están), y se clusteriza sobre PCA, con todos los vídeos. t-SNE, que solo se usa para dibujar, va con n_iter=250, perplexity=10, angle=0.8 y n_jobs=-1: por defecto tardaba 20,5 min y así unos 3, y PCA sigue siendo la elegida. Cada modelo se entrena primero con los valores por defecto de su clase, salvo el eps de DBSCAN: con el de por defecto (0,5) da error de memoria, así que se elige con la curva de distancia al 5º vecino; y Mean-Shift, que por defecto tardó 6 h 43 min y formó un solo grupo, así que se le calcula el bandwidth con 10.000 vídeos y se usa bin_seeding para que tarde segundos. Se evalúa con la silhouette y el ARI; el mejor (K-Means) se optimiza con GridSearchCV.
-
-  Muestras de 10.000 vídeos al azar, cada una justificada en el notebook: la comparación de reducciones (con todos necesitaría más de 170 GB de memoria) y la silhouette dentro del GridSearchCV de K-Means (con todos tarda unos 8 minutos por cálculo y da prácticamente lo mismo: 0,349 frente a 0,347; las tablas comparativas sí la calculan con todos los vídeos).
-- **Recomendación:** como en el ejemplo de recomendador de películas con KNN, one hot de las palabras del título, los tags y el canal, distancia del coseno de cada variable sumada y los 10 vídeos más cercanos. Para que no recomiende muchas versiones del mismo vídeo, se eligen de uno en uno y se salta cualquiera cuyo título se parezca demasiado al de uno ya elegido. La categoría no se usa para buscar los vecinos (la elige el creador y no siempre corresponde al contenido); el título, el canal y la categoría sirven para elegir el vídeo del que se parte.
-
-Con el mejor modelo de cada problema se buscan los hiperparámetros óptimos, y esos son los modelos industrializados en el paquete models.
-
-## 💡 Conclusiones
-
-- **Likes:** se predicen muy bien (R2 0,949).
-- **Categoría:** es el problema más difícil (F1 macro 0,32, accuracy 0,39).
-- **Clusterización:** K-Means optimizado (2 grupos) sobre PCA da la mejor separación (silhouette 0,41): separa los vídeos más populares de los menos populares, pero los grupos no tienen relación con las categorías (ARI cercano a 0).
-- **Recomendación:** recomienda vídeos del mismo tema que el elegido (la misma canción o el mismo artista); indicar más datos (título, canal y categoría) ayuda a partir del vídeo que queremos. Saltando los títulos demasiado parecidos a uno ya elegido, recomienda menos versiones del mismo vídeo y más vídeos distintos del mismo artista o estilo, aunque a veces se salta un vídeo bueno con un título de formato parecido.
+Los likes se predicen muy bien; la categoría es lo más difícil. Los grupos separan los vídeos más populares de los menos populares, sin relación con las categorías.

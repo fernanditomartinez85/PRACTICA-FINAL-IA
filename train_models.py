@@ -18,41 +18,22 @@ args = parser.parse_args()
 config = configparser.ConfigParser()
 if not config.read(args.config, encoding="utf-8"):
     raise FileNotFoundError(f"No se encuentra el fichero de configuración: {args.config}")
-
-carpeta_config = os.path.dirname(os.path.abspath(args.config))
-
-
-def ruta(seccion, clave):
-    """Devuelve la ruta del fichero de configuración; si es relativa, la toma desde la carpeta de train.conf."""
-    return os.path.join(carpeta_config, config[seccion][clave])
+carpeta_config = os.path.dirname(os.path.abspath(args.config))#las rutas relativas parten de aquí
 
 
-def guardar(modelo, seccion):
-    ruta_modelo = ruta(seccion, "ruta_modelo")
-    os.makedirs(os.path.dirname(ruta_modelo), exist_ok=True)#creamos la carpeta si no existe
-    modelo.save(ruta_modelo)
-    print(f"{seccion} guardado en {ruta_modelo}")
+def entrenar(modelo, nombre, X, y=None):
+    """Entrena el modelo y lo guarda en la ruta de su sección de train.conf."""
+    ruta = os.path.join(carpeta_config, config[nombre]["ruta_modelo"])
+    os.makedirs(os.path.dirname(ruta), exist_ok=True)
+    modelo.fit(X, y).save(ruta)
+    print(f"{nombre} guardado en {ruta}")
 
 
-df = pd.read_csv(ruta("datos", "ruta_datos"), keep_default_na=False)#keep_default_na=False: que un título o tag como "NA" no se lea como nulo
+#keep_default_na=False: que un título o tag como "NA" no se lea como nulo
+df = pd.read_csv(os.path.join(carpeta_config, config["datos"]["ruta_datos"]), keep_default_na=False)
+df_likes = df[df["ratings_disabled"] == False]#con los ratings desactivados los likes valen siempre 0
 
-#Predicción de la categoría
-rf_classifier = RFClassifier()
-rf_classifier.fit(df, df["category"])
-guardar(rf_classifier, "rf_classifier")
-
-#Predicción de likes: solo vídeos con los ratings activados, ya que si no los likes valen siempre 0
-df_likes = df[df["ratings_disabled"] == False]
-rf_regressor = RFRegressor()
-rf_regressor.fit(df_likes, df_likes["likes"])
-guardar(rf_regressor, "rf_regressor")
-
-#Clusterización: con todos los vídeos, igual que en el notebook
-kmeans_clustering = KMeansClustering()
-kmeans_clustering.fit(df)
-guardar(kmeans_clustering, "kmeans_clustering")
-
-#Recomendador
-knn_recommender = KNNRecommender()
-knn_recommender.fit(df)
-guardar(knn_recommender, "knn_recommender")
+entrenar(RFClassifier(), "rf_classifier", df, df["category"])
+entrenar(RFRegressor(), "rf_regressor", df_likes, df_likes["likes"])
+entrenar(KMeansClustering(), "kmeans_clustering", df)
+entrenar(KNNRecommender(), "knn_recommender", df)
