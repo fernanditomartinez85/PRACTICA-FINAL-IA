@@ -41,15 +41,12 @@ class RFRegressor:
             self.__dict__.update(pickle.load(f))
         return self
 
-    def __a_dataframe(self, X):
-        """Pasa a DataFrame un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)."""
+    def __preprocess_data(self, X, entrenar):
+        #comments_disabled pasa de True/False a 1/0
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
         if isinstance(X, (dict, pd.Series)):
             X = pd.DataFrame([X])
         elif not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        return X[self.columnas]
-
-    def __preprocess_data(self, X, entrenar):
-        #comments_disabled pasa de True/False a 1/0
-        X = self.__a_dataframe(X).astype({col: float for col in self.numericas})
+        X = X[self.columnas].astype({col: float for col in self.numericas})
         return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)

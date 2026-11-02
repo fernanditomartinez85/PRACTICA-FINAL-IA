@@ -24,7 +24,6 @@ class KMeansClustering:
         self.videos_por_canal = None#se calcula en fit
 
     def fit(self, X, y=None):
-        self.videos_por_canal = self.__a_dataframe(X)["channel_title"].value_counts()
         self.modelo.fit(self.__preprocess_data(X, entrenar=True))
         return self
 
@@ -42,14 +41,6 @@ class KMeansClustering:
             self.__dict__.update(pickle.load(f))
         return self
 
-    def __a_dataframe(self, X):
-        """Pasa a DataFrame un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)."""
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        return X[self.columnas]
-
     def __contar_tags(self, tags):
         if isinstance(tags, str):#del csv vienen separados por "|"
             tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
@@ -57,7 +48,14 @@ class KMeansClustering:
 
     def __preprocess_data(self, X, entrenar):
         """Crea n_tags, longitud_titulo y n_videos_canal, y aplica logaritmo, escalado y pca."""
-        X = self.__a_dataframe(X).copy()
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        X = X[self.columnas].copy()
+        if entrenar:#vídeos de cada canal en los datos de entrenamiento
+            self.videos_por_canal = X["channel_title"].value_counts()
         X["n_tags"] = X["tags"].apply(self.__contar_tags)
         X["longitud_titulo"] = X["title"].str.len()
         #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
