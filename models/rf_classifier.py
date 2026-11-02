@@ -10,9 +10,9 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 class RFClassifier:
     """Predice la categoría del vídeo: Random Forest optimizado con RandomizedSearchCV (F1 macro en test de 0,32)."""
 
-    NUMERICAS = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"]
-    CATEGORICAS = ["pais"]
-    COLUMNAS = NUMERICAS + CATEGORICAS
+    numericas = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"]
+    categoricas = ["pais"]
+    columnas = numericas + categoricas
 
     def __init__(self, n_estimators=150, criterion="gini", max_depth=20, min_samples_split=2, min_samples_leaf=1,
                  max_features="log2", class_weight="balanced_subsample", max_samples=0.8, random_state=42):
@@ -22,8 +22,8 @@ class RFClassifier:
                                              max_features=max_features, class_weight=class_weight, bootstrap=True,
                                              max_samples=max_samples, random_state=random_state, n_jobs=-1)
         #one hot del país; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
-        self.preprocess = ColumnTransformer([("encoder", OneHotEncoder(handle_unknown="ignore"), self.CATEGORICAS),
-                                             ("numericas", "passthrough", self.NUMERICAS)])
+        self.preprocess = ColumnTransformer([("encoder", OneHotEncoder(handle_unknown="ignore"), self.categoricas),
+                                             ("numericas", "passthrough", self.numericas)])
         self.label_encoder = LabelEncoder()#categorías de texto a números y al revés
 
     def fit(self, X, y):
@@ -49,9 +49,9 @@ class RFClassifier:
         if isinstance(X, (dict, pd.Series)):
             X = pd.DataFrame([X])
         elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.COLUMNAS)), columns=self.COLUMNAS)
-        return X[self.COLUMNAS]
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        return X[self.columnas]
 
     def __preprocess_data(self, X, entrenar):
-        X = self.__a_dataframe(X).astype({col: float for col in self.NUMERICAS})
+        X = self.__a_dataframe(X).astype({col: float for col in self.numericas})
         return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)

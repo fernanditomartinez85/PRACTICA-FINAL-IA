@@ -7,15 +7,15 @@ import pandas as pd
 
 parser = argparse.ArgumentParser(description="Limpieza y transformaciones comunes a todos los modelos.")
 parser.add_argument("ruta_entrada", help="carpeta con los XXvideos.csv y XX_category_id.json de cada país")
-parser.add_argument("ruta_salida", help="CSV donde se guardan los datos limpios")
+parser.add_argument("ruta_salida", help="csv donde se guardan los datos limpios")
 args = parser.parse_args()
 
-PAISES = {"CA": "Canadá", "DE": "Alemania", "FR": "Francia", "GB": "Gran Bretaña", "IN": "India",
+paises = {"CA": "Canadá", "DE": "Alemania", "FR": "Francia", "GB": "Gran Bretaña", "IN": "India",
           "JP": "Japón", "KR": "Corea", "MX": "Mexico", "RU": "Rusia", "US": "USA"}
 
 
 def leer_pais(codigo, nombre):
-    """Lee los vídeos de un país, cambia category_id por el nombre de su categoría (del JSON) y añade el país."""
+    """Lee los vídeos de un país, cambia category_id por el nombre de su categoría (del json) y añade el país."""
     items = pd.json_normalize(pd.read_json(os.path.join(args.ruta_entrada, f"{codigo}_category_id.json"))["items"])
     categorias = pd.DataFrame({"json_id": items["id"].astype(str), "category": items["snippet.title"]})
     df = pd.read_csv(os.path.join(args.ruta_entrada, f"{codigo}videos.csv"), encoding="utf-8", encoding_errors="replace")
@@ -25,7 +25,7 @@ def leer_pais(codigo, nombre):
     return df
 
 
-df = pd.concat([leer_pais(codigo, nombre) for codigo, nombre in PAISES.items()], ignore_index=True)
+df = pd.concat([leer_pais(codigo, nombre) for codigo, nombre in paises.items()], ignore_index=True)
 df = df.drop_duplicates().drop(columns=["video_id", "thumbnail_link", "description", "video_error_or_removed"])
 df = df.dropna()#los vídeos sin categoría
 df = df[~df["category"].isin(["Trailers", "Movies", "Nonprofits & Activism"])]#categorías con muy pocos vídeos
@@ -46,7 +46,7 @@ df = df.drop(columns=["trending_date", "publish_time", "primer_trending"])
 for columna in ["title", "channel_title", "tags"]:
     df[columna] = df[columna].str.split().str.join(" ")
 
-#tags sin comillas ni etiquetas vacías, separados por "|" (un CSV no guarda listas; las clases de models los separan)
+#tags sin comillas ni etiquetas vacías, separados por "|" (un csv no guarda listas; las clases de models los separan)
 df["tags"] = (df["tags"].str.replace('"', "", regex=False).str.strip().str.split("|", regex=False)
               .apply(lambda tags: "|".join(tag for tag in tags if tag != "")))
 

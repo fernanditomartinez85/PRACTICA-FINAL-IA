@@ -12,11 +12,11 @@ class KNNRecommender:
     recomendación ya elegida (recomendar_variado del notebook).
     """
 
-    COLUMNAS = ["title", "tags", "channel_title", "category", "pais", "views"]
-    MOSTRAR = ["title", "channel_title", "category", "pais", "views"]
-    BUSQUEDA = ["title", "channel_title", "category"]#datos con los que se elige el vídeo de partida
-    CANDIDATOS = 500#vídeos más cercanos entre los que se eligen las recomendaciones
-    UMBRAL = 0.5#similitud del título a partir de la cual dos vídeos cuentan como versiones del mismo
+    columnas = ["title", "tags", "channel_title", "category", "pais", "views"]
+    mostrar = ["title", "channel_title", "category", "pais", "views"]
+    busqueda = ["title", "channel_title", "category"]#datos con los que se elige el vídeo de partida
+    n_candidatos = 500#vídeos más cercanos entre los que se eligen las recomendaciones
+    umbral = 0.5#similitud del título a partir de la cual dos vídeos cuentan como versiones del mismo
 
     def __init__(self):
         #sparse_output=True: solo guarda los 1, ya que cada matriz tiene cientos de miles de columnas
@@ -40,7 +40,7 @@ class KNNRecommender:
         if isinstance(X, (dict, pd.Series)):
             return self.__recomendar(X, n)
         if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X, columns=self.BUSQUEDA)
+            X = pd.DataFrame(X, columns=self.busqueda)
         return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
 
     def save(self, ruta):
@@ -59,11 +59,11 @@ class KNNRecommender:
         if isinstance(X, (dict, pd.Series)):
             X = pd.DataFrame([X])
         elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.COLUMNAS)), columns=self.COLUMNAS)
-        return X[self.COLUMNAS]
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        return X[self.columnas]
 
     def __lista_tags(self, tags):
-        if isinstance(tags, str):#del CSV vienen separados por "|"
+        if isinstance(tags, str):#del csv vienen separados por "|"
             tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
         return [] if list(tags) == ["[none]"] else [tag.lower() for tag in tags]
 
@@ -85,8 +85,8 @@ class KNNRecommender:
         return sum(1 - (X @ X[i].T).toarray().ravel() for X in (self.X_titulo, self.X_tags, self.X_canal))
 
     def __recomendar(self, datos, n):
-        #solo filtramos por lo que venga indicado (en un CSV, lo que no se indica llega vacío)
-        indicados = {col: datos.get(col) for col in self.BUSQUEDA if datos.get(col) is not None
+        #solo filtramos por lo que venga indicado (en un csv, lo que no se indica llega vacío)
+        indicados = {col: datos.get(col) for col in self.busqueda if datos.get(col) is not None
                      and not pd.isna(datos.get(col)) and datos.get(col) != ""}
         if not indicados:
             print("Indica al menos el título, el canal o la categoría")
@@ -103,17 +103,17 @@ class KNNRecommender:
         i = coincidencias.index[0]#el más visto, porque los vídeos están ordenados por views
 
         #candidatos del más cercano al más lejano, sin el propio vídeo
-        candidatos = pd.Series(self.__distancia_videos(i)).sort_values().drop(i).index[:self.CANDIDATOS]
+        candidatos = pd.Series(self.__distancia_videos(i)).sort_values().drop(i).index[:self.n_candidatos]
         #elegimos de uno en uno y saltamos los que tienen un título demasiado parecido al de uno ya elegido
         elegidos = []
         for video in candidatos:
             video_seleccionado = True
             for e in elegidos:
-                #si se parece más que UMBRAL a alguno de los ya elegidos, no se selecciona
-                if (self.X_titulo[video] @ self.X_titulo[e].T)[0, 0] > self.UMBRAL:
+                #si se parece más que umbral a alguno de los ya elegidos, no se selecciona
+                if (self.X_titulo[video] @ self.X_titulo[e].T)[0, 0] > self.umbral:
                     video_seleccionado = False
             if video_seleccionado:
                 elegidos.append(video)
                 if len(elegidos) == n:
                     break
-        return self.videos.loc[elegidos, self.MOSTRAR]
+        return self.videos.loc[elegidos, self.mostrar]

@@ -13,15 +13,15 @@ class RFRegressor:
     Se entrena solo con vídeos con los ratings activados, ya que si no los likes valen siempre 0.
     """
 
-    NUMERICAS = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"]
-    CATEGORICAS = ["pais", "category"]
-    COLUMNAS = NUMERICAS + CATEGORICAS
+    numericas = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"]
+    categoricas = ["pais", "category"]
+    columnas = numericas + categoricas
 
     def __init__(self, random_state=42):
         self.modelo = RandomForestRegressor(random_state=random_state, n_jobs=-1)#n_jobs=-1 solo lo acelera
         #one hot de país y categoría; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
-        self.preprocess = ColumnTransformer([("encoder", OneHotEncoder(handle_unknown="ignore"), self.CATEGORICAS),
-                                             ("numericas", "passthrough", self.NUMERICAS)])
+        self.preprocess = ColumnTransformer([("encoder", OneHotEncoder(handle_unknown="ignore"), self.categoricas),
+                                             ("numericas", "passthrough", self.numericas)])
 
     def fit(self, X, y):
         self.modelo.fit(self.__preprocess_data(X, entrenar=True), np.ravel(y))
@@ -46,10 +46,10 @@ class RFRegressor:
         if isinstance(X, (dict, pd.Series)):
             X = pd.DataFrame([X])
         elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.COLUMNAS)), columns=self.COLUMNAS)
-        return X[self.COLUMNAS]
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        return X[self.columnas]
 
     def __preprocess_data(self, X, entrenar):
         #comments_disabled pasa de True/False a 1/0
-        X = self.__a_dataframe(X).astype({col: float for col in self.NUMERICAS})
+        X = self.__a_dataframe(X).astype({col: float for col in self.numericas})
         return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
