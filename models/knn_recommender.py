@@ -25,45 +25,6 @@ class KNNRecommender:
         self.mlb_canal = MultiLabelBinarizer(sparse_output=True)
         self.videos = self.X_titulo = self.X_tags = self.X_canal = None#se calculan en fit
 
-    def fit(self, X, y=None):
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
-        videos = X[self.columnas].sort_values(by="views", ascending=False)
-        self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
-        self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)
-        return self
-
-    def predict(self, X, n=10):
-        """Recibe el título, el canal o la categoría (uno, dos o los tres) de uno o varios vídeos y recomienda n vídeos.
-
-        Con un vídeo (diccionario o Series) devuelve un DataFrame; con varios, una lista (None si no encuentra el vídeo).
-        """
-        if isinstance(X, (dict, pd.Series)):
-            return self.__recomendar(X, n)
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X, columns=self.busqueda)
-        return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
-
-    def save(self, ruta):
-        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
-        with open(ruta, "wb") as f:
-            pickle.dump(self.__dict__, f)
-
-    def load(self, ruta):
-        """Recupera el estado guardado con save, para predecir sin reentrenar."""
-        with open(ruta, "rb") as f:
-            self.__dict__.update(pickle.load(f))
-        return self
-
-    def __lista_tags(self, tags):
-        if isinstance(tags, str):#del csv vienen separados por "|"
-            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
-        return [] if list(tags) == ["[none]"] else [tag.lower() for tag in tags]
-
     def __preprocess_data(self, X):
         """Pasa las palabras del título, los tags y el canal a matrices de 0 y 1 con cada fila normalizada."""
         palabras_titulo = X["title"].str.lower().str.split()
@@ -76,6 +37,23 @@ class KNNRecommender:
         return (normalize(self.mlb_titulo.fit_transform(palabras_titulo)),
                 normalize(self.mlb_tags.fit_transform(lista_tags)),
                 normalize(self.mlb_canal.fit_transform(lista_canal)))
+
+    def __lista_tags(self, tags):
+        if isinstance(tags, str):#del csv vienen separados por "|"
+            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
+        return [] if list(tags) == ["[none]"] else [tag.lower() for tag in tags]
+
+    def fit(self, X, y=None):
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
+        videos = X[self.columnas].sort_values(by="views", ascending=False)
+        self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
+        self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)
+        return self
 
     def __distancia_videos(self, i):
         """Suma de las distancias del coseno del vídeo i a todos los vídeos: de 0 (iguales) a 3 (nada en común)."""
@@ -114,3 +92,25 @@ class KNNRecommender:
                 if len(elegidos) == n:
                     break
         return self.videos.loc[elegidos, self.mostrar]
+
+    def predict(self, X, n=10):
+        """Recibe el título, el canal o la categoría (uno, dos o los tres) de uno o varios vídeos y recomienda n vídeos.
+
+        Con un vídeo (diccionario o Series) devuelve un DataFrame; con varios, una lista (None si no encuentra el vídeo).
+        """
+        if isinstance(X, (dict, pd.Series)):
+            return self.__recomendar(X, n)
+        if not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(X, columns=self.busqueda)
+        return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
+
+    def save(self, ruta):
+        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
+        with open(ruta, "wb") as f:
+            pickle.dump(self.__dict__, f)
+
+    def load(self, ruta):
+        """Recupera el estado guardado con save, para predecir sin reentrenar."""
+        with open(ruta, "rb") as f:
+            self.__dict__.update(pickle.load(f))
+        return self

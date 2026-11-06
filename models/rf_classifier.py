@@ -26,6 +26,15 @@ class RFClassifier:
                                              ("numericas", "passthrough", self.numericas)])
         self.label_encoder = LabelEncoder()#categorías de texto a números y al revés
 
+    def __preprocess_data(self, X, entrenar):
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        X = X[self.columnas].astype({col: float for col in self.numericas})
+        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
+
     def fit(self, X, y):
         self.modelo.fit(self.__preprocess_data(X, entrenar=True), self.label_encoder.fit_transform(np.ravel(y)))
         return self
@@ -43,12 +52,3 @@ class RFClassifier:
         with open(ruta, "rb") as f:
             self.__dict__.update(pickle.load(f))
         return self
-
-    def __preprocess_data(self, X, entrenar):
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        X = X[self.columnas].astype({col: float for col in self.numericas})
-        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)

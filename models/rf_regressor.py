@@ -23,6 +23,16 @@ class RFRegressor:
         self.preprocess = ColumnTransformer([("encoder", OneHotEncoder(handle_unknown="ignore"), self.categoricas),
                                              ("numericas", "passthrough", self.numericas)])
 
+    def __preprocess_data(self, X, entrenar):
+        #comments_disabled pasa de True/False a 1/0
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        X = X[self.columnas].astype({col: float for col in self.numericas})
+        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
+
     def fit(self, X, y):
         self.modelo.fit(self.__preprocess_data(X, entrenar=True), np.ravel(y))
         return self
@@ -40,13 +50,3 @@ class RFRegressor:
         with open(ruta, "rb") as f:
             self.__dict__.update(pickle.load(f))
         return self
-
-    def __preprocess_data(self, X, entrenar):
-        #comments_disabled pasa de True/False a 1/0
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        X = X[self.columnas].astype({col: float for col in self.numericas})
-        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)

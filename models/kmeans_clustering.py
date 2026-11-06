@@ -1,5 +1,4 @@
 import pickle
-
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
@@ -9,7 +8,6 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 
 class KMeansClustering:
-    """Agrupa los vídeos: K-Means con 2 grupos sobre 2 componentes de pca (GridSearchCV, silhouette de 0,41)."""
 
     columnas = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "tags", "title", "channel_title"]
     variables = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
@@ -22,6 +20,28 @@ class KMeansClustering:
                                     ("scaler", StandardScaler()),
                                     ("pca", PCA(n_components=n_components, random_state=random_state))])
         self.videos_por_canal = None#se calcula en fit
+
+    def __preprocess_data(self, X, entrenar):
+        """Crea n_tags, longitud_titulo y n_videos_canal, y aplica logaritmo, escalado y pca."""
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(X, (dict, pd.Series)):
+            X = pd.DataFrame([X])
+        elif not isinstance(X, pd.DataFrame):
+            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
+        X = X[self.columnas].copy()
+        if entrenar:#vídeos de cada canal en los datos de entrenamiento
+            self.videos_por_canal = X["channel_title"].value_counts()
+        X["n_tags"] = X["tags"].apply(self.__contar_tags)
+        X["longitud_titulo"] = X["title"].str.len()
+        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
+        X["n_videos_canal"] = X["channel_title"].map(self.videos_por_canal).fillna(1)
+        X = X[self.variables].astype(float)
+        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
+
+    def __contar_tags(self, tags):
+        if isinstance(tags, str):#del csv vienen separados por "|"
+            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
+        return 0 if list(tags) == ["[none]"] else len(tags)
 
     def fit(self, X, y=None):
         self.modelo.fit(self.__preprocess_data(X, entrenar=True))
@@ -40,25 +60,3 @@ class KMeansClustering:
         with open(ruta, "rb") as f:
             self.__dict__.update(pickle.load(f))
         return self
-
-    def __contar_tags(self, tags):
-        if isinstance(tags, str):#del csv vienen separados por "|"
-            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
-        return 0 if list(tags) == ["[none]"] else len(tags)
-
-    def __preprocess_data(self, X, entrenar):
-        """Crea n_tags, longitud_titulo y n_videos_canal, y aplica logaritmo, escalado y pca."""
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        X = X[self.columnas].copy()
-        if entrenar:#vídeos de cada canal en los datos de entrenamiento
-            self.videos_por_canal = X["channel_title"].value_counts()
-        X["n_tags"] = X["tags"].apply(self.__contar_tags)
-        X["longitud_titulo"] = X["title"].str.len()
-        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
-        X["n_videos_canal"] = X["channel_title"].map(self.videos_por_canal).fillna(1)
-        X = X[self.variables].astype(float)
-        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
