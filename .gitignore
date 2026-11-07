@@ -4,7 +4,6 @@ __pycache__/
 
 # Ficheros que generan los scripts (se vuelven a crear con preprocess_data.py y train_models.py)
 datos_limpios.csv
-pesos/
 
-# Lo genera el notebook al ejecutarse (pesa demasiado para GitHub)
-dataframe_final_limpio.pkl
+# Los generan el notebook y train_models.py (pesan demasiado para GitHub)
+*.pkl

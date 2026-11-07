@@ -1,9 +1,6 @@
 import argparse
 import configparser
-import os
-
 import pandas as pd
-
 from models.kmeans_clustering import KMeansClustering
 from models.knn_recommender import KNNRecommender
 from models.rf_classifier import RFClassifier
@@ -12,26 +9,26 @@ from models.rf_regressor import RFRegressor
 #Ejemplo de uso: python train_models.py train.conf
 
 parser = argparse.ArgumentParser(description="Entrena los modelos y los guarda en disco.")
-parser.add_argument("config", help="ruta del fichero de configuración (train.conf)")
+parser.add_argument("ruta_train_conf", help="Ruta del fichero de configuración (train.conf)")
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
-if not config.read(args.config, encoding="utf-8"):
-    raise FileNotFoundError(f"No se encuentra el fichero de configuración: {args.config}")
-carpeta_config = os.path.dirname(os.path.abspath(args.config))#las rutas relativas parten de aquí
-
-
-def entrenar(modelo, nombre, X, y=None):
-    """Entrena el modelo y lo guarda en la ruta de su sección de train.conf."""
-    ruta = os.path.join(carpeta_config, config[nombre]["ruta_modelo"])
-    os.makedirs(os.path.dirname(ruta), exist_ok=True)
-    modelo.fit(X, y).save(ruta)
-    print(f"{nombre} guardado en {ruta}")
-
+lectura_train_conf = config.read(args.ruta_train_conf, encoding="utf-8")
+if not lectura_train_conf:
+    raise FileNotFoundError(f"No se encuentra el fichero de configuración: {args.ruta_train_conf}")
 
 #keep_default_na=False: que un título o tag como "NA" no se lea como nulo
-df = pd.read_csv(os.path.join(carpeta_config, config["datos"]["ruta_datos"]), keep_default_na=False)
-df_likes = df[df["ratings_disabled"] == False]#con los ratings desactivados los likes valen siempre 0
+df = pd.read_csv(config["datos"]["ruta_datos"], keep_default_na=False)
+df_likes = df[df["ratings_disabled"] == False]#con los ratings desactivados los likes valen siempre 0, lo usamos en regressor
+
+
+def entrenar(modelo, seccion_train_conf, X, y=None):#y=None porque hay modelos que no la necesitan
+    """Entrena el modelo y lo guarda en la ruta de su sección de train.conf."""
+    ruta = config[seccion_train_conf]["ruta_modelo"]
+    modelo.fit(X, y)
+    #entrena cada modelo llamando a fit "con el conjunto de datos", sin pedir ninguna división.
+    modelo.save(ruta)
+    print(f"{seccion_train_conf} guardado en {ruta}")
 
 entrenar(RFClassifier(), "rf_classifier", df, df["category"])
 entrenar(RFRegressor(), "rf_regressor", df_likes, df_likes["likes"])

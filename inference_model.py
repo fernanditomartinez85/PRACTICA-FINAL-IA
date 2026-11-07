@@ -8,7 +8,7 @@ from models.knn_recommender import KNNRecommender
 from models.rf_classifier import RFClassifier
 from models.rf_regressor import RFRegressor
 
-#Ejemplo de uso: python inference_model.py rf_classifier pesos/rf_classifier.pkl nuevos_videos.csv
+#Ejemplo de uso: python inference_model.py rf_classifier rf_classifier.pkl nuevos_videos.csv
 
 #hay títulos en ruso, coreano, japonés...: sin esto, en Windows, guardar la salida en un fichero da UnicodeEncodeError
 sys.stdout.reconfigure(encoding="utf-8")
