@@ -23,9 +23,12 @@ datos = pd.read_csv(args.datos, keep_default_na=False)
 modelo = modelos[args.modelo]().load(args.pesos)
 
 if args.modelo == "knn_recommender":
+    for columna in ["title", "channel_title", "category"]:
+        if columna not in datos.columns:
+            raise ValueError(f"Para el recomendador el CSV tiene que tener la columna {columna} (puede ir vacía)")
     recomendaciones = modelo.predict(datos)
     for i in range(len(datos)):
-        print(f"\nRecomendaciones para la fila {i + 1} del fichero:")
+        print(f"\nRecomendaciones para: {datos.loc[i, 'title']} {datos.loc[i, 'channel_title']} {datos.loc[i, 'category']}")
         if recomendaciones[i] is not None:
             print(recomendaciones[i].to_string(index=False))
 else:
