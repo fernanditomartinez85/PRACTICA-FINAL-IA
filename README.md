@@ -22,7 +22,7 @@ Con Python 3, pandas y scikit-learn (por ejemplo, Anaconda), desde la carpeta de
 ```
 python preprocess_data.py . datos_limpios.csv
 python train_models.py train.conf
-python inference_model.py rf_classifier rf_classifier.pkl nuevos_videos.csv
+python inference_model.py rf_classifier rf_classifier.pkl datos_limpios.csv
 ```
 
 En la inferencia, el modelo puede ser `rf_classifier`, `rf_regressor`, `kmeans_clustering` o `knn_recommender`. Para el recomendador basta con indicar el título, el canal o la categoría de los vídeos.
