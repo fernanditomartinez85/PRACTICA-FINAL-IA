@@ -14,15 +14,15 @@ class KMeansClustering:
                  "n_tags", "longitud_titulo", "n_videos_canal"]
 
     def __init__(self, n_clusters=2, n_components=2, random_state=42):
-        self.modelo = KMeans(n_clusters=n_clusters, random_state=random_state)
-        #logaritmo y escalado para los outliers, y pca a 2 componentes
-        self.preprocess = Pipeline([("log", FunctionTransformer(np.log1p)),
-                                    ("scaler", StandardScaler()),
-                                    ("pca", PCA(n_components=n_components, random_state=random_state))])
+        #logaritmo y escalado para los outliers, pca a 2 componentes y K-Means
+        self.pipeline_kmeans = Pipeline([("log", FunctionTransformer(np.log1p)),
+                                         ("scaler", StandardScaler()),
+                                         ("pca", PCA(n_components=n_components, random_state=random_state)),
+                                         ("modelo", KMeans(n_clusters=n_clusters, random_state=random_state))])
         self.videos_por_canal = None#se calcula en fit
 
     def __preprocess_data(self, X, entrenar):
-        """Crea n_tags, longitud_titulo y n_videos_canal, y aplica logaritmo, escalado y pca."""
+        """Crea n_tags, longitud_titulo y n_videos_canal."""
         #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
         if isinstance(X, (dict, pd.Series)):
             X = pd.DataFrame([X])
@@ -35,8 +35,7 @@ class KMeansClustering:
         X["longitud_titulo"] = X["title"].str.len()
         #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
         X["n_videos_canal"] = X["channel_title"].map(self.videos_por_canal).fillna(1)
-        X = X[self.variables].astype(float)
-        return self.preprocess.fit_transform(X) if entrenar else self.preprocess.transform(X)
+        return X[self.variables].astype(float)
 
     def __contar_tags(self, tags):
         if isinstance(tags, str):#del csv vienen separados por "|"
@@ -44,11 +43,11 @@ class KMeansClustering:
         return 0 if list(tags) == ["[none]"] else len(tags)
 
     def fit(self, X, y=None):
-        self.modelo.fit(self.__preprocess_data(X, entrenar=True))
+        self.pipeline_kmeans.fit(self.__preprocess_data(X, entrenar=True))
         return self
 
     def predict(self, X):
-        return self.modelo.predict(self.__preprocess_data(X, entrenar=False))
+        return self.pipeline_kmeans.predict(self.__preprocess_data(X, entrenar=False))
 
     def save(self, ruta):
         """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
