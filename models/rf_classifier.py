@@ -15,7 +15,6 @@ class RFClassifier:
 
     def __init__(self, n_estimators=150, criterion="gini", max_depth=20, min_samples_split=2, min_samples_leaf=1,
                  max_features="log2", class_weight="balanced_subsample", max_samples=0.8, random_state=42):
-        #por defecto, los mejores parámetros del RandomizedSearchCV del notebook; n_jobs=-1 solo lo acelera
         rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion, max_depth=max_depth,
                                     min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
                                     max_features=max_features, class_weight=class_weight, bootstrap=True,
