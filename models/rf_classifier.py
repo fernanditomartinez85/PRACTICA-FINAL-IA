@@ -34,9 +34,10 @@ class RFClassifier:
             X = pd.DataFrame([X])
         elif not isinstance(X, pd.DataFrame):
             X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        return X[self.columnas].astype({col: float for col in self.numericas})
+        return X[self.columnas]
 
     def fit(self, X, y):
+        #ravel: si y llega como columna (numpy array de forma (n, 1)), la deja en una dimensión y evita el aviso de sklearn
         self.pipeline_rf.fit(self.__preprocess_data(X), self.label_encoder.fit_transform(np.ravel(y)))
         return self
 
