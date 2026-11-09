@@ -13,12 +13,12 @@ class KMeansClustering:
     variables = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                  "n_tags", "longitud_titulo", "n_videos_canal"]
 
-    def __init__(self, n_clusters=2, n_components=2, random_state=42):
+    def __init__(self):
         #logaritmo y escalado para los outliers, pca a 2 componentes y K-Means
         self.pipeline_kmeans = Pipeline([("log", FunctionTransformer(np.log1p)),
                                          ("scaler", StandardScaler()),
-                                         ("pca", PCA(n_components=n_components, random_state=random_state)),
-                                         ("modelo", KMeans(n_clusters=n_clusters, random_state=random_state))])
+                                         ("pca", PCA(n_components=2, random_state=42)),
+                                         ("modelo", KMeans(n_clusters=2, random_state=42))])
         self.videos_por_canal = None#se calcula en fit
 
     def __preprocess_data(self, X, entrenar):

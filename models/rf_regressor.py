@@ -15,8 +15,8 @@ class RFRegressor:
 
     columnas = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled", "pais", "category"]
 
-    def __init__(self, random_state=42):
-        rf_likes = RandomForestRegressor(random_state=random_state, n_jobs=-1)#n_jobs=-1 solo lo acelera
+    def __init__(self):
+        rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
         #one hot de país y categoría; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
         preprocess_rf_likes = ColumnTransformer(transformers=[
             ("encoder", OneHotEncoder(handle_unknown="ignore"), ["pais", "category"]),
