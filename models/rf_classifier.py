@@ -15,14 +15,16 @@ class RFClassifier:
 
     def __init__(self, n_estimators=150, criterion="gini", max_depth=20, min_samples_split=2, min_samples_leaf=1,
                  max_features="log2", class_weight="balanced_subsample", max_samples=0.8, random_state=42):
+        
         rf = RandomForestClassifier(n_estimators=n_estimators, criterion=criterion, max_depth=max_depth,
                                     min_samples_split=min_samples_split, min_samples_leaf=min_samples_leaf,
                                     max_features=max_features, class_weight=class_weight, bootstrap=True,
                                     max_samples=max_samples, random_state=random_state, n_jobs=-1)
         #one hot del país; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
         preprocess_rf = ColumnTransformer(transformers=[
-            ("encoder", OneHotEncoder(handle_unknown="ignore"), self.categoricas),
-            ("numericas", "passthrough", self.numericas)])
+            ("encoder", OneHotEncoder(handle_unknown="ignore"), ["pais"]),
+            ("numericas", "passthrough",
+             ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"])])
         self.pipeline_rf = Pipeline(steps=[("preprocesamiento", preprocess_rf),
                                            ("modelo", rf)])
         self.label_encoder = LabelEncoder()#categorías de texto a números y al revés
