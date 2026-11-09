@@ -9,9 +9,7 @@ from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 class RFClassifier:
 
-    numericas = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"]
-    categoricas = ["pais"]
-    columnas = numericas + categoricas
+    columnas = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"]
 
     def __init__(self, n_estimators=150, criterion="gini", max_depth=20, min_samples_split=2, min_samples_leaf=1,
                  max_features="log2", class_weight="balanced_subsample", max_samples=0.8, random_state=42):

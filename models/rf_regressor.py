@@ -13,16 +13,15 @@ class RFRegressor:
     Se entrena solo con vídeos con los ratings activados, ya que si no los likes valen siempre 0.
     """
 
-    numericas = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"]
-    categoricas = ["pais", "category"]
-    columnas = numericas + categoricas
+    columnas = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled", "pais", "category"]
 
     def __init__(self, random_state=42):
         rf_likes = RandomForestRegressor(random_state=random_state, n_jobs=-1)#n_jobs=-1 solo lo acelera
         #one hot de país y categoría; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
         preprocess_rf_likes = ColumnTransformer(transformers=[
-            ("encoder", OneHotEncoder(handle_unknown="ignore"), self.categoricas),
-            ("numericas", "passthrough", self.numericas)])
+            ("encoder", OneHotEncoder(handle_unknown="ignore"), ["pais", "category"]),
+            ("numericas", "passthrough",
+             ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
         self.pipeline_rf_likes = Pipeline(steps=[("preprocesamiento", preprocess_rf_likes),
                                                  ("modelo", rf_likes)])
 
