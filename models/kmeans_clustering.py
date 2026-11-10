@@ -10,7 +10,6 @@ class KMeansClustering:
 
     def __init__(self):
 
-        #en vez del one hot: escalado de las numéricas y después PCA
         self.scaler = StandardScaler()
         self.pca = PCA(n_components=2, random_state=42)
         self.kmeans = KMeans(n_clusters=2, random_state=42)
