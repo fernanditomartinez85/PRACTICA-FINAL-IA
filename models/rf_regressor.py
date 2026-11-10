@@ -32,8 +32,7 @@ class RFRegressor:
             ("numericas", "passthrough",
              ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
         X_likes = self.preprocess_rf_likes.fit_transform(X_likes)
-        #ravel: si y llega como columna (numpy array de forma (n, 1)), la deja en una dimensión y evita el aviso de sklearn
-        y_likes = np.ravel(y)
+        y_likes = y
         return X_likes, y_likes
 
     def fit(self, df, y):

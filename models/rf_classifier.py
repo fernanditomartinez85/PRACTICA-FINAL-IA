@@ -20,18 +20,16 @@ class RFClassifier:
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"])
             
         X = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"]]
-        if y is None:#al predecir no hay y: aplicamos el one hot aprendido al entrenar
+        if y is None:#al predecir no hay y
             X = self.preprocess_rf.transform(X)
             return X
-        #al entrenar creamos las transformaciones, las aprendemos y las aplicamos
+        
         encoder = OneHotEncoder(handle_unknown="ignore")
         self.preprocess_rf = ColumnTransformer(transformers=[
             ("encoder", encoder, ["pais"]),
             ("numericas", "passthrough",
              ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"])])
         X = self.preprocess_rf.fit_transform(X)
-        #ravel: si y llega como columna (numpy array de forma (n, 1)), la deja en una dimensión y evita el aviso de sklearn
-        y = np.ravel(y)
         self.label_encoder = LabelEncoder()
         self.label_encoder.fit(y)
         y = self.label_encoder.transform(y)
