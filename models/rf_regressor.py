@@ -14,6 +14,11 @@ class RFRegressor:
 
     def __init__(self):
         self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
+        encoder = OneHotEncoder(handle_unknown="ignore")
+        self.preprocess_rf_likes = ColumnTransformer(transformers=[
+            ("encoder", encoder, ["pais", "category"]),
+            ("numericas", "passthrough",
+             ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
 
     def __preprocess_data(self, df, y=None):
         if not isinstance(df, pd.DataFrame):
@@ -25,12 +30,7 @@ class RFRegressor:
         if y is None:#al predecir no hay y: aplicamos el one hot aprendido al entrenar
             X_likes = self.preprocess_rf_likes.transform(X_likes)
             return X_likes
-        #al entrenar creamos las transformaciones, las aprendemos y las aplicamos
-        encoder = OneHotEncoder(handle_unknown="ignore")
-        self.preprocess_rf_likes = ColumnTransformer(transformers=[
-            ("encoder", encoder, ["pais", "category"]),
-            ("numericas", "passthrough",
-             ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
+        #al entrenar aprendemos las transformaciones y las aplicamos
         X_likes = self.preprocess_rf_likes.fit_transform(X_likes)
         y_likes = y
         return X_likes, y_likes

@@ -10,6 +10,11 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 class KMeansClustering:
 
     def __init__(self):
+        logaritmo = FunctionTransformer(np.log1p)
+        scaler = StandardScaler()
+        #Definimos las transformaciones numéricas para tratar los outliers
+        self.pipeline_num = Pipeline([("log", logaritmo),("scaler", scaler)])
+        self.pca = PCA(n_components=2, random_state=42)
         self.kmeans = KMeans(n_clusters=2, random_state=42)
 
     def __preprocess_data(self, df, entrenar):
@@ -42,13 +47,8 @@ class KMeansClustering:
             X_pca = self.pca.transform(X_cluster)
             return X_pca
 
-        #al entrenar creamos las transformaciones, las aprendemos y las aplicamos
-        logaritmo = FunctionTransformer(np.log1p)
-        scaler = StandardScaler()
-        #Definimos las transformaciones numéricas para tratar los outliers
-        self.pipeline_num = Pipeline([("log", logaritmo),("scaler", scaler)])
+        #al entrenar aprendemos las transformaciones y las aplicamos
         X_cluster = self.pipeline_num.fit_transform(X_cluster)
-        self.pca = PCA(n_components=2, random_state=42)
         X_pca = self.pca.fit_transform(X_cluster)
         return X_pca
 

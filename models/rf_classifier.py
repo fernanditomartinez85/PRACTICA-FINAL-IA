@@ -10,9 +10,15 @@ class RFClassifier:
 
     def __init__(self):
         
+        self.label_encoder = LabelEncoder()
+        encoder = OneHotEncoder(handle_unknown="ignore")
         self.rf = RandomForestClassifier(n_estimators=150, criterion="gini", max_depth=20, min_samples_split=2,
                                          min_samples_leaf=1, max_features="log2", class_weight="balanced_subsample",
                                          bootstrap=True, max_samples=0.8, random_state=42, n_jobs=-1)
+        self.preprocess_rf = ColumnTransformer(transformers=[
+            ("encoder", encoder, ["pais"]),
+            ("numericas", "passthrough",
+             ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"])])
 
     def __preprocess_data(self, df, y=None):
         if not isinstance(df, pd.DataFrame):
@@ -24,13 +30,7 @@ class RFClassifier:
             X = self.preprocess_rf.transform(X)
             return X
         
-        encoder = OneHotEncoder(handle_unknown="ignore")
-        self.preprocess_rf = ColumnTransformer(transformers=[
-            ("encoder", encoder, ["pais"]),
-            ("numericas", "passthrough",
-             ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion"])])
         X = self.preprocess_rf.fit_transform(X)
-        self.label_encoder = LabelEncoder()
         self.label_encoder.fit(y)
         y = self.label_encoder.transform(y)
         return X, y
