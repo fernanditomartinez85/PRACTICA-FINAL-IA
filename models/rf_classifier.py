@@ -16,7 +16,7 @@ class RFClassifier:
 
     def __preprocess_data(self, df, y=None):
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"])
             
         X = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"]]
