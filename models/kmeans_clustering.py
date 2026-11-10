@@ -13,10 +13,7 @@ class KMeansClustering:
         self.kmeans = KMeans(n_clusters=2, random_state=42)
 
     def __preprocess_data(self, df, entrenar):
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(df, (dict, pd.Series)):
-            df = pd.DataFrame([df])
-        elif not isinstance(df, pd.DataFrame):
+        if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                                        "tags", "title", "channel_title"])

@@ -16,10 +16,7 @@ class RFRegressor:
         self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
 
     def __preprocess_data(self, df, y=None):
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(df, (dict, pd.Series)):
-            df = pd.DataFrame([df])
-        elif not isinstance(df, pd.DataFrame):
+        if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 7),
                               columns=["views", "comment_count", "dislikes", "dias_desde_publicacion",
                                        "comments_disabled", "pais", "category"])
