@@ -25,14 +25,14 @@ class RFClassifier:
         
         self.label_encoder = LabelEncoder()
 
-    def __preprocess_data(self, X, y=None):
+    def __preprocess_data(self, df, y=None):
         #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, 6),
-                             columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"])
-        X = X[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"]]
+        if isinstance(df, (dict, pd.Series)):
+            df = pd.DataFrame([df])
+        elif not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),
+                              columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"])
+        X = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "pais"]]
         if y is None:#al predecir no hay y
             return X
         #ravel: si y llega como columna (numpy array de forma (n, 1)), la deja en una dimensión y evita el aviso de sklearn
@@ -41,13 +41,13 @@ class RFClassifier:
         y = self.label_encoder.transform(y)
         return X, y
 
-    def fit(self, X, y):
-        X, y = self.__preprocess_data(X, y)
+    def fit(self, df, y):
+        X, y = self.__preprocess_data(df, y)
         self.pipeline_rf.fit(X, y)
         return self
 
-    def predict(self, X):
-        y_pred = self.pipeline_rf.predict(self.__preprocess_data(X))
+    def predict(self, df):
+        y_pred = self.pipeline_rf.predict(self.__preprocess_data(df))
         return self.label_encoder.inverse_transform(y_pred)
 
     def save(self, ruta):
