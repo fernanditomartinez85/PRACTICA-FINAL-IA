@@ -17,7 +17,7 @@ class RFRegressor:
 
     def __preprocess_data(self, df, y=None):
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 7),
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 7),#valores en filas de 7 columnas
                               columns=["views", "comment_count", "dislikes", "dias_desde_publicacion",
                                        "comments_disabled", "pais", "category"])
         X_likes = df[["views", "comment_count", "dislikes", "dias_desde_publicacion",

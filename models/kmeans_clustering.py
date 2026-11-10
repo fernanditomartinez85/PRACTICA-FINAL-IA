@@ -14,7 +14,7 @@ class KMeansClustering:
 
     def __preprocess_data(self, df, entrenar):
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),#valores en filas de 8 columnas
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                                        "tags", "title", "channel_title"])
         #copia para no añadir columnas al df que nos pasan
