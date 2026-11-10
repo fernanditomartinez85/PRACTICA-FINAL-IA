@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
@@ -13,33 +12,42 @@ class RFRegressor:
     Se entrena solo con vídeos con los ratings activados, ya que si no los likes valen siempre 0.
     """
 
-    columnas = ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled", "pais", "category"]
-
     def __init__(self):
-        rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
-        #one hot de país y categoría; las numéricas pasan tal cual (los árboles no necesitan logaritmo ni escalado)
-        preprocess_rf_likes = ColumnTransformer(transformers=[
-            ("encoder", OneHotEncoder(handle_unknown="ignore"), ["pais", "category"]),
+        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
+
+    def __preprocess_data(self, df, y=None):
+        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
+        if isinstance(df, (dict, pd.Series)):
+            df = pd.DataFrame([df])
+        elif not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 7),
+                              columns=["views", "comment_count", "dislikes", "dias_desde_publicacion",
+                                       "comments_disabled", "pais", "category"])
+        X_likes = df[["views", "comment_count", "dislikes", "dias_desde_publicacion",
+                      "comments_disabled", "pais", "category"]]
+        if y is None:#al predecir no hay y: aplicamos el one hot aprendido al entrenar
+            X_likes = self.preprocess_rf_likes.transform(X_likes)
+            return X_likes
+        #al entrenar creamos las transformaciones, las aprendemos y las aplicamos
+        encoder = OneHotEncoder(handle_unknown="ignore")
+        self.preprocess_rf_likes = ColumnTransformer(transformers=[
+            ("encoder", encoder, ["pais", "category"]),
             ("numericas", "passthrough",
              ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
-        self.pipeline_rf_likes = Pipeline(steps=[("preprocesamiento", preprocess_rf_likes),
-                                                 ("modelo", rf_likes)])
-
-    def __preprocess_data(self, X):
-        #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        return X[self.columnas]
-
-    def fit(self, X, y):
+        X_likes = self.preprocess_rf_likes.fit_transform(X_likes)
         #ravel: si y llega como columna (numpy array de forma (n, 1)), la deja en una dimensión y evita el aviso de sklearn
-        self.pipeline_rf_likes.fit(self.__preprocess_data(X), np.ravel(y))
+        y_likes = np.ravel(y)
+        return X_likes, y_likes
+
+    def fit(self, df, y):
+        X_likes, y_likes = self.__preprocess_data(df, y)
+        self.rf_likes.fit(X_likes, y_likes)
         return self
 
-    def predict(self, X):
-        return self.pipeline_rf_likes.predict(self.__preprocess_data(X))
+    def predict(self, df):
+        X_likes = self.__preprocess_data(df)
+        y_pred_likes = self.rf_likes.predict(X_likes)
+        return y_pred_likes
 
     def save(self, ruta):
         """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""

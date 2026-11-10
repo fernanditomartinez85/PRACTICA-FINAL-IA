@@ -9,45 +9,66 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 class KMeansClustering:
 
-    columnas = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion", "tags", "title", "channel_title"]
-    variables = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
-                 "n_tags", "longitud_titulo", "n_videos_canal"]
-
     def __init__(self):
-        #logaritmo y escalado para los outliers, pca a 2 componentes y K-Means
-        self.pipeline_kmeans = Pipeline([("log", FunctionTransformer(np.log1p)),
-                                         ("scaler", StandardScaler()),
-                                         ("pca", PCA(n_components=2, random_state=42)),
-                                         ("modelo", KMeans(n_clusters=2, random_state=42))])
-        self.videos_por_canal = None#se calcula en fit
+        self.kmeans = KMeans(n_clusters=2, random_state=42)
 
-    def __preprocess_data(self, X, entrenar):
-        """Crea n_tags, longitud_titulo y n_videos_canal."""
+    def __preprocess_data(self, df, entrenar):
         #un vídeo (diccionario o Series) o varios (DataFrame, o numpy array con las columnas en orden)
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, len(self.columnas)), columns=self.columnas)
-        X = X[self.columnas].copy()
+        if isinstance(df, (dict, pd.Series)):
+            df = pd.DataFrame([df])
+        elif not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),
+                              columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
+                                       "tags", "title", "channel_title"])
+        #copia para no añadir columnas al df que nos pasan
+        df = df.copy()
+
+        #creamos n_tags para que cuente los tags y ayudar a clusterizar.
+        df["n_tags"] = df["tags"].apply(self.__contar_tags)
+
+        df["longitud_titulo"] = df["title"].str.len()
+
         if entrenar:#vídeos de cada canal en los datos de entrenamiento
-            self.videos_por_canal = X["channel_title"].value_counts()
-        X["n_tags"] = X["tags"].apply(self.__contar_tags)
-        X["longitud_titulo"] = X["title"].str.len()
-        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
-        X["n_videos_canal"] = X["channel_title"].map(self.videos_por_canal).fillna(1)
-        return X[self.variables].astype(float)
+            self.videos_por_canal = df["channel_title"].value_counts()
+
+        #¿el canal de este vídeo sale mucho en tendencias o casi nunca? Un canal que no estaba al
+        #entrenar cuenta como 1 vídeo (el propio)
+        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
+
+        variables_cluster = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
+                             "n_tags", "longitud_titulo", "n_videos_canal"]
+        #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
+        X_cluster = df[variables_cluster].astype(float)
+
+        if not entrenar:#al predecir aplicamos las transformaciones aprendidas al entrenar
+            X_cluster = self.pipeline_num.transform(X_cluster)
+            X_pca = self.pca.transform(X_cluster)
+            return X_pca
+
+        #al entrenar creamos las transformaciones, las aprendemos y las aplicamos
+        logaritmo = FunctionTransformer(np.log1p)
+        scaler = StandardScaler()
+        #Definimos las transformaciones numéricas para tratar los outliers
+        self.pipeline_num = Pipeline([("log", logaritmo),("scaler", scaler)])
+        X_cluster = self.pipeline_num.fit_transform(X_cluster)
+        self.pca = PCA(n_components=2, random_state=42)
+        X_pca = self.pca.fit_transform(X_cluster)
+        return X_pca
 
     def __contar_tags(self, tags):
         if isinstance(tags, str):#del csv vienen separados por "|"
             tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
         return 0 if list(tags) == ["[none]"] else len(tags)
 
-    def fit(self, X, y=None):
-        self.pipeline_kmeans.fit(self.__preprocess_data(X, entrenar=True))
+    def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
+        X_pca = self.__preprocess_data(df, entrenar=True)
+        self.kmeans.fit(X_pca)
         return self
 
-    def predict(self, X):
-        return self.pipeline_kmeans.predict(self.__preprocess_data(X, entrenar=False))
+    def predict(self, df):
+        X_pca = self.__preprocess_data(df, entrenar=False)
+        etiquetas_kmeans = self.kmeans.predict(X_pca)
+        return etiquetas_kmeans
 
     def save(self, ruta):
         """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
