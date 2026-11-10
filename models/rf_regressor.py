@@ -7,14 +7,11 @@ from sklearn.preprocessing import OneHotEncoder
 
 
 class RFRegressor:
-    """Predice los likes: Random Forest con sus parámetros por defecto (R2 en test de 0,949; el optimizado salió peor).
-
-    Se entrena solo con vídeos con los ratings activados, ya que si no los likes valen siempre 0.
-    """
 
     def __init__(self):
-        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#n_jobs=-1 solo lo acelera
+        
         encoder = OneHotEncoder(handle_unknown="ignore")
+        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)
         self.preprocess_rf_likes = ColumnTransformer(transformers=[
             ("encoder", encoder, ["pais", "category"]),
             ("numericas", "passthrough",
@@ -25,12 +22,13 @@ class RFRegressor:
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 7),#valores en filas de 7 columnas
                               columns=["views", "comment_count", "dislikes", "dias_desde_publicacion",
                                        "comments_disabled", "pais", "category"])
+            
         X_likes = df[["views", "comment_count", "dislikes", "dias_desde_publicacion",
                       "comments_disabled", "pais", "category"]]
-        if y is None:#al predecir no hay y: aplicamos el one hot aprendido al entrenar
+        if y is None:#al predecir no hay y
             X_likes = self.preprocess_rf_likes.transform(X_likes)
             return X_likes
-        #al entrenar aprendemos las transformaciones y las aplicamos
+        
         X_likes = self.preprocess_rf_likes.fit_transform(X_likes)
         y_likes = y
         return X_likes, y_likes

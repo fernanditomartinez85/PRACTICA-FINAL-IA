@@ -10,6 +10,7 @@ from sklearn.preprocessing import FunctionTransformer, StandardScaler
 class KMeansClustering:
 
     def __init__(self):
+        
         logaritmo = FunctionTransformer(np.log1p)
         scaler = StandardScaler()
         #Definimos las transformaciones numéricas para tratar los outliers
@@ -22,6 +23,7 @@ class KMeansClustering:
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),#valores en filas de 8 columnas
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                                        "tags", "title", "channel_title"])
+            
         #copia para no añadir columnas al df que nos pasan
         df = df.copy()
 
@@ -42,12 +44,11 @@ class KMeansClustering:
         #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
         X_cluster = df[variables_cluster].astype(float)
 
-        if not entrenar:#al predecir aplicamos las transformaciones aprendidas al entrenar
+        if not entrenar:#al predecir
             X_cluster = self.pipeline_num.transform(X_cluster)
             X_pca = self.pca.transform(X_cluster)
             return X_pca
-
-        #al entrenar aprendemos las transformaciones y las aplicamos
+        
         X_cluster = self.pipeline_num.fit_transform(X_cluster)
         X_pca = self.pca.fit_transform(X_cluster)
         return X_pca
