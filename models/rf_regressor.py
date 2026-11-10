@@ -11,11 +11,11 @@ class RFRegressor:
     def __init__(self):
 
         encoder = OneHotEncoder(handle_unknown="ignore")
-        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)#regresor con sus parámetros por defecto
+        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)
         self.preprocess_rf_likes = ColumnTransformer(transformers=[
-            ("encoder", encoder, ["pais", "category"]),#también category
+            ("encoder", encoder, ["pais", "category"]),
             ("numericas", "passthrough",
-             ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])#sin likes y con comments_disabled
+             ["views", "comment_count", "dislikes", "dias_desde_publicacion", "comments_disabled"])])
 
     def __preprocess_data(self, df, y=None):
         if not isinstance(df, pd.DataFrame):
@@ -30,8 +30,7 @@ class RFRegressor:
             return X_likes
 
         X_likes = self.preprocess_rf_likes.fit_transform(X_likes)
-        y_likes = y#sin LabelEncoder: los likes ya son números
-        return X_likes, y_likes
+        return X_likes, y
 
     def fit(self, df, y):
         X_likes, y_likes = self.__preprocess_data(df, y)
