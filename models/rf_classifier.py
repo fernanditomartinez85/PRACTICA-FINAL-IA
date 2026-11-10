@@ -43,15 +43,14 @@ class RFClassifier:
     def predict(self, df):
         X = self.__preprocess_data(df)
         y_pred = self.rf.predict(X)
-        return self.label_encoder.inverse_transform(y_pred)
+        return self.label_encoder.inverse_transform(y_pred)#utilizamos para que salga el nombre de la categoria.
 
     def save(self, ruta):
-        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
         with open(ruta, "wb") as f:
-            pickle.dump(self.__dict__, f)
+            pickle.dump(self, f)
 
     def load(self, ruta):
         """Recupera el estado guardado con save, para predecir sin reentrenar."""
         with open(ruta, "rb") as f:
-            self.__dict__.update(pickle.load(f))
-        return self
+            modelo_entrenado = pickle.load(f)
+        return modelo_entrenado

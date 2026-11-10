@@ -104,12 +104,11 @@ class KNNRecommender:
         return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
 
     def save(self, ruta):
-        """Guarda en un pickle todo el estado del modelo (modelo entrenado y transformaciones)."""
         with open(ruta, "wb") as f:
-            pickle.dump(self.__dict__, f)
+            pickle.dump(self, f)
 
     def load(self, ruta):
         """Recupera el estado guardado con save, para predecir sin reentrenar."""
         with open(ruta, "rb") as f:
-            self.__dict__.update(pickle.load(f))
-        return self
+            modelo_entrenado = pickle.load(f)
+        return modelo_entrenado
