@@ -72,7 +72,6 @@ class KMeansClustering:
             pickle.dump(self, f)
 
     def load(self, ruta):
-        """Recupera el estado guardado con save, para predecir sin reentrenar."""
         with open(ruta, "rb") as f:
             modelo_entrenado = pickle.load(f)
         return modelo_entrenado

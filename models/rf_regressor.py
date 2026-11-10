@@ -40,14 +40,13 @@ class RFRegressor:
     def predict(self, df):
         X_likes = self.__preprocess_data(df)
         y_pred_likes = self.rf_likes.predict(X_likes)
-        return y_pred_likes#sin inverse_transform: devuelve los likes
+        return y_pred_likes
 
     def save(self, ruta):
         with open(ruta, "wb") as f:
             pickle.dump(self, f)
 
     def load(self, ruta):
-        """Recupera el estado guardado con save, para predecir sin reentrenar."""
         with open(ruta, "rb") as f:
             modelo_entrenado = pickle.load(f)
         return modelo_entrenado
