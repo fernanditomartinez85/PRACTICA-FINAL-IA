@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 
@@ -11,10 +10,8 @@ class KMeansClustering:
 
     def __init__(self):
 
-        #en vez del one hot: logaritmo y escalado de las numéricas, y después PCA
-        logaritmo = FunctionTransformer(np.log1p)
-        scaler = StandardScaler()
-        self.pipeline_num = Pipeline([("log", logaritmo),("scaler", scaler)])
+        #en vez del one hot: escalado de las numéricas y después PCA
+        self.scaler = StandardScaler()
         self.pca = PCA(n_components=2, random_state=42)
         self.kmeans = KMeans(n_clusters=2, random_state=42)
 
@@ -42,13 +39,15 @@ class KMeansClustering:
                              "n_tags", "longitud_titulo", "n_videos_canal"]
         #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
         X_cluster = df[variables_cluster].astype(float)
+        logaritmo = FunctionTransformer(np.log1p)#sin self: no aprende nada, es igual al entrenar y al predecir
+        X_cluster = logaritmo.transform(X_cluster)
 
         if not entrenar:#al predecir
-            X_cluster = self.pipeline_num.transform(X_cluster)
+            X_cluster = self.scaler.transform(X_cluster)
             X_pca = self.pca.transform(X_cluster)#segunda transformación: PCA
             return X_pca
 
-        X_cluster = self.pipeline_num.fit_transform(X_cluster)
+        X_cluster = self.scaler.fit_transform(X_cluster)
         X_pca = self.pca.fit_transform(X_cluster)#segunda transformación: PCA
         return X_pca#sin y: solo devuelve X
 
