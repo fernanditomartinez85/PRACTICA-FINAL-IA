@@ -14,7 +14,7 @@ class KMeansClustering:
         self.pca = PCA(n_components=2, random_state=42)
         self.kmeans = KMeans(n_clusters=2, random_state=42)
 
-    def __preprocess_data(self, df):#solo los cambios que no aprenden nada; lo que aprende va en fit
+    def __preprocess_data(self, df):
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),#valores en filas de 8 columnas
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
@@ -23,12 +23,15 @@ class KMeansClustering:
         df["n_tags"] = df["tags"].apply(self.__contar_tags)
 
         df["longitud_titulo"] = df["title"].str.len()
-        return df#devuelve el df con las columnas nuevas, no la X
+
+        return df
 
     def __contar_tags(self, tags):#método extra para la columna n_tags
         if isinstance(tags, str):#del csv vienen separados por "|"
-            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
-        return 0 if list(tags) == ["[none]"] else len(tags)
+            tags = tags.split("|")
+        if tags == ["[none]"]:#por si no hubiera ningun tag
+            return 0
+        return len(tags)
 
     def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
         df = self.__preprocess_data(df)
