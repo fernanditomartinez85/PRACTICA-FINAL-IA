@@ -14,7 +14,7 @@ class KMeansClustering:
         self.pca = PCA(n_components=2, random_state=42)
         self.kmeans = KMeans(n_clusters=2, random_state=42)
 
-    def __preprocess_data(self, df, entrenar):#entrenar en vez de y: K-Means no tiene y
+    def __preprocess_data(self, df):#solo los cambios que no aprenden nada; lo que aprende va en fit
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 8),#valores en filas de 8 columnas
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
@@ -23,28 +23,7 @@ class KMeansClustering:
         df["n_tags"] = df["tags"].apply(self.__contar_tags)
 
         df["longitud_titulo"] = df["title"].str.len()
-
-        if entrenar:#vídeos de cada canal, se aprende al entrenar
-            self.videos_por_canal = df["channel_title"].value_counts()
-
-        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
-        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
-
-        variables_cluster = ["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
-                             "n_tags", "longitud_titulo", "n_videos_canal"]
-        #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
-        X_cluster = df[variables_cluster].astype(float)
-        logaritmo = FunctionTransformer(np.log1p)#sin self: no aprende nada, es igual al entrenar y al predecir
-        X_cluster = logaritmo.transform(X_cluster)
-
-        if not entrenar:#al predecir
-            X_cluster = self.scaler.transform(X_cluster)
-            X_pca = self.pca.transform(X_cluster)#segunda transformación: PCA
-            return X_pca
-
-        X_cluster = self.scaler.fit_transform(X_cluster)
-        X_pca = self.pca.fit_transform(X_cluster)#segunda transformación: PCA
-        return X_pca#sin y: solo devuelve X
+        return df#devuelve el df con las columnas nuevas, no la X
 
     def __contar_tags(self, tags):#método extra para la columna n_tags
         if isinstance(tags, str):#del csv vienen separados por "|"
@@ -52,12 +31,29 @@ class KMeansClustering:
         return 0 if list(tags) == ["[none]"] else len(tags)
 
     def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
-        X_pca = self.__preprocess_data(df, entrenar=True)
+        df = self.__preprocess_data(df)
+        self.videos_por_canal = df["channel_title"].value_counts()
+        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
+        #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
+        X_cluster = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
+                        "n_tags", "longitud_titulo", "n_videos_canal"]].astype(float)
+        logaritmo = FunctionTransformer(np.log1p)
+        X_cluster = logaritmo.transform(X_cluster)
+        X_cluster = self.scaler.fit_transform(X_cluster)
+        X_pca = self.pca.fit_transform(X_cluster)
         self.kmeans.fit(X_pca)
         return self
 
     def predict(self, df):
-        X_pca = self.__preprocess_data(df, entrenar=False)
+        df = self.__preprocess_data(df)
+        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
+        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
+        X_cluster = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
+                        "n_tags", "longitud_titulo", "n_videos_canal"]].astype(float)
+        logaritmo = FunctionTransformer(np.log1p)
+        X_cluster = logaritmo.transform(X_cluster)
+        X_cluster = self.scaler.transform(X_cluster)
+        X_pca = self.pca.transform(X_cluster)
         etiquetas_kmeans = self.kmeans.predict(X_pca)
         return etiquetas_kmeans#sin inverse_transform: devuelve el número de grupo
 
