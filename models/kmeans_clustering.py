@@ -36,7 +36,7 @@ class KMeansClustering:
         df = self.__preprocess_data(df)
         self.videos_por_canal = df["channel_title"].value_counts()
         df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal)
-        #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
+        #astype(float): con un numpy array los números llegan como objeto y el logaritmo daría error
         X_cluster = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                         "n_tags", "longitud_titulo", "n_videos_canal"]].astype(float)
         logaritmo = FunctionTransformer(np.log1p)
@@ -48,7 +48,7 @@ class KMeansClustering:
 
     def predict(self, df):
         df = self.__preprocess_data(df)
-        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio)
+        #un canal que no estaba al entrenar cuenta como 1 vídeo (el propio), por eso fillna(1)
         df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
         X_cluster = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                         "n_tags", "longitud_titulo", "n_videos_canal"]].astype(float)
@@ -57,7 +57,7 @@ class KMeansClustering:
         X_cluster = self.scaler.transform(X_cluster)
         X_pca = self.pca.transform(X_cluster)
         etiquetas_kmeans = self.kmeans.predict(X_pca)
-        return etiquetas_kmeans#sin inverse_transform: devuelve el número de grupo
+        return etiquetas_kmeans#devuelve el número de grupo
 
     def save(self, ruta):
         with open(ruta, "wb") as f:
