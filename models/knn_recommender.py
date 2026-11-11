@@ -6,17 +6,18 @@ from sklearn.preprocessing import MultiLabelBinarizer, normalize
 class KNNRecommender:
 
     def __init__(self):
-        #en vez del one hot y el Random Forest: un MultiLabelBinarizer por título, tags y canal
+        
         self.mlb_titulo = MultiLabelBinarizer(sparse_output=True)
         self.mlb_tags = MultiLabelBinarizer(sparse_output=True)
         self.mlb_canal = MultiLabelBinarizer(sparse_output=True)
 
-    def __preprocess_data(self, X):#solo se usa al entrenar: no hay rama de predecir
-        palabras_titulo = X["title"].str.lower().str.split()
-        lista_tags = X["tags"].apply(self.__lista_tags)
+    def __preprocess_data(self, df):#solo se usa al entrenar: no hay rama de predecir
+        palabras_titulo = df["title"].str.lower().str.split()
+        df["tags"] = df["tags"].str.split("|")#del csv vienen como texto separado por "|"
+        lista_tags = df["tags"].apply(self.__lista_tags)
         #MultiLabelBinarizer espera una lista por vídeo: con el texto suelto crearía una columna por letra
         lista_canal = []
-        for canal in X["channel_title"]:
+        for canal in df["channel_title"]:
             lista_canal.append([canal])
         #devuelve tres matrices normalizadas (título, tags y canal) en vez de una X
         return (normalize(self.mlb_titulo.fit_transform(palabras_titulo)),
@@ -24,19 +25,19 @@ class KNNRecommender:
                 normalize(self.mlb_canal.fit_transform(lista_canal)))
 
     def __lista_tags(self, tags):#método extra: tags en lista y en minúsculas
-        if isinstance(tags, str):#del csv vienen separados por "|"
-            tags = [tag for tag in tags.replace('"', "").split("|") if tag != ""]
-        return [] if list(tags) == ["[none]"] else [tag.lower() for tag in tags]
+        if tags == ["[none]"]:#por si no hubiera ningun tag
+            return []
+        return [tag.lower() for tag in tags]
 
-    def fit(self, X, y=None):#X en vez de df; y=None: no hay y
+    def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
         #aquí también acepta diccionario o Series, y el paso a DataFrame va en fit
-        if isinstance(X, (dict, pd.Series)):
-            X = pd.DataFrame([X])
-        elif not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(np.array(X, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
+        if isinstance(df, (dict, pd.Series)):
+            df = pd.DataFrame([df])
+        elif not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
                              columns=["title", "tags", "channel_title", "category", "pais", "views"])
         #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
-        videos = X[["title", "tags", "channel_title", "category", "pais", "views"]]
+        videos = df[["title", "tags", "channel_title", "category", "pais", "views"]]
         videos = videos.sort_values(by="views", ascending=False)
         self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
         self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
@@ -78,13 +79,13 @@ class KNNRecommender:
                     break
         return self.videos.loc[elegidos, ["title", "channel_title", "category", "pais", "views"]]
 
-    def predict(self, X, n=10):#X en vez de df; n: número de recomendaciones
+    def predict(self, df, n=10):#n: número de recomendaciones
         #con un vídeo (diccionario o Series) devuelve una tabla; con varios, una lista (None si no encuentra el vídeo)
-        if isinstance(X, (dict, pd.Series)):
-            return self.__recomendar(X, n)
-        if not isinstance(X, pd.DataFrame):
-            X = pd.DataFrame(X, columns=["title", "channel_title", "category"])
-        return [self.__recomendar(fila, n) for _, fila in X.iterrows()]
+        if isinstance(df, (dict, pd.Series)):
+            return self.__recomendar(df, n)
+        if not isinstance(df, pd.DataFrame):
+            df = pd.DataFrame(df, columns=["title", "channel_title", "category"])
+        return [self.__recomendar(fila, n) for _, fila in df.iterrows()]
 
     def save(self, ruta):
         with open(ruta, "wb") as f:
