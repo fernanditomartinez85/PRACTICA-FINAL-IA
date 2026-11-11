@@ -35,7 +35,7 @@ class KMeansClustering:
     def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
         df = self.__preprocess_data(df)
         self.videos_por_canal = df["channel_title"].value_counts()
-        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal).fillna(1)
+        df["n_videos_canal"] = df["channel_title"].map(self.videos_por_canal)
         #astype: con un numpy array los números llegan como objeto y el logaritmo daría error
         X_cluster = df[["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                         "n_tags", "longitud_titulo", "n_videos_canal"]].astype(float)
