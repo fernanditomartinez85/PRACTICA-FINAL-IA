@@ -20,10 +20,6 @@ class KMeansClustering:
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                                        "tags", "title", "channel_title"])
 
-        #copia: aquí se añaden columnas y así no cambiamos el df que nos pasan
-        df = df.copy()
-
-        #columnas nuevas que no tiene el clasificador: número de tags, longitud del título y vídeos del canal
         df["n_tags"] = df["tags"].apply(self.__contar_tags)
 
         df["longitud_titulo"] = df["title"].str.len()
