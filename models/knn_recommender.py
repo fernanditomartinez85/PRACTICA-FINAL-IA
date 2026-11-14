@@ -38,7 +38,11 @@ class KNNRecommender:
         return self
 
     def __distancia_videos(self, i):
-        return sum(1 - (X @ X[i].T).toarray().ravel() for X in (self.X_titulo, self.X_tags, self.X_canal))
+        #distancia del coseno = 1 - similitud del coseno (el producto de las filas normalizadas)
+        distancia_titulo = 1 - (self.X_titulo @ self.X_titulo[i].T).toarray().ravel()
+        distancia_tags = 1 - (self.X_tags @ self.X_tags[i].T).toarray().ravel()
+        distancia_canal = 1 - (self.X_canal @ self.X_canal[i].T).toarray().ravel()
+        return distancia_titulo + distancia_tags + distancia_canal
 
     def __recomendar(self, datos, n):#método extra: recomendar_variado del notebook para un vídeo
         #solo filtramos por lo que venga indicado (en un csv, lo que no se indica llega vacío)
