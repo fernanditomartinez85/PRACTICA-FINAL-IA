@@ -49,7 +49,6 @@ class KNNRecommender:
             print("Indica al menos el título, el canal o la categoría")
             return None
 
-        #filtramos solo por lo que nos indiquen: el título que contiene el texto, el canal y la categoría
         coincidencias = self.videos
         if titulo is not None:
             coincidencias = coincidencias[coincidencias["title"].str.contains(titulo, case=False, regex=False)]
