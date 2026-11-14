@@ -90,7 +90,8 @@ class KNNRecommender:
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 3),#valores en filas de 3 columnas
                               columns=["title", "channel_title", "category"])
         recomendaciones = []
-        df = df.fillna("").replace("", None)#lo que no se indica (vacío) pasa a None, que es lo que entiende __recomendar_variado
+        df = df.fillna("")
+        df = df.replace("", None)#lo que no se indica (vacío) pasa a None, que es lo que entiende __recomendar_variado
         for titulo, canal, categoria in zip(df["title"], df["channel_title"], df["category"]):
             recomendaciones.append(self.__recomendar_variado(titulo, canal, categoria, n))
         return recomendaciones
