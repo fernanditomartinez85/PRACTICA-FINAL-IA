@@ -22,8 +22,8 @@ class KNNRecommender:
                 normalize(self.mlb_tags.fit_transform(lista_tags)),
                 normalize(self.mlb_canal.fit_transform(lista_canal)))
 
-    def __lista_tags(self, tags):#método extra: tags en lista y en minúsculas
-        if tags == ["[none]"]:#por si no hubiera ningun tag
+    def __lista_tags(self, tags):
+        if tags == ["[none]"]:
             return []
         return [tag.lower() for tag in tags]
 
