@@ -87,7 +87,8 @@ class KNNRecommender:
 
     def predict(self, df, n=10):
         if not isinstance(df, pd.DataFrame):
-            df = pd.DataFrame(df, columns=["title", "channel_title", "category"])
+            df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 3),#valores en filas de 3 columnas
+                              columns=["title", "channel_title", "category"])
         recomendaciones = []
         for _, fila in df.iterrows():
             #en un csv lo que no se indica llega vacío: lo pasamos a None, que es lo que entiende __recomendar_variado
