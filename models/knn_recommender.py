@@ -31,9 +31,9 @@ class KNNRecommender:
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
                              columns=["title", "tags", "channel_title", "category", "pais", "views"])
-        videos = df[["title", "tags", "channel_title", "category", "pais", "views"]]
-        videos = videos.sort_values(by="views", ascending=False)
-        self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
+        df = df.sort_values(by="views", ascending=False)
+        df = df.drop_duplicates(subset=["title", "channel_title"], keep="first")
+        self.videos = df.reset_index(drop=True)
         self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
         return self
 
