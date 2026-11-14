@@ -37,7 +37,7 @@ class KNNRecommender:
         self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
         return self
 
-    def __distancia_videos(self, i):#método extra: suma de las 3 distancias del coseno, de 0 a 3
+    def __distancia_videos(self, i):
         return sum(1 - (X @ X[i].T).toarray().ravel() for X in (self.X_titulo, self.X_tags, self.X_canal))
 
     def __recomendar(self, datos, n):#método extra: recomendar_variado del notebook para un vídeo
