@@ -68,8 +68,6 @@ class KNNRecommender:
         recomendaciones = self.videos[["title", "channel_title", "category", "pais", "views"]].copy()
         recomendaciones["distancia"] = self.__distancia_videos(i)
         recomendaciones = recomendaciones.sort_values(by="distancia")
-        #quitamos el propio vídeo, que es el más cercano (distancia 0), nos quedamos con los n primeros y
-        #quitamos la distancia, que solo nos sirve para ordenar
         recomendaciones = recomendaciones.drop(index=i).head(n).drop(columns="distancia")
 
         return recomendaciones
