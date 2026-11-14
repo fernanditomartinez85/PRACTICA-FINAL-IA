@@ -86,12 +86,6 @@ class KNNRecommender:
         return candidatos.loc[elegidos]
 
     def predict(self, df, n=10):
-        #con un vídeo (diccionario o Series) devuelve una tabla; con varios, una lista (None si no encuentra el vídeo)
-        if isinstance(df, (dict, pd.Series)):
-            df = pd.DataFrame([df])
-            una_sola = True
-        else:
-            una_sola = False
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(df, columns=["title", "channel_title", "category"])
         recomendaciones = []
@@ -100,8 +94,6 @@ class KNNRecommender:
             datos = [None if pd.isna(fila.get(col)) or fila.get(col) == "" else fila.get(col)
                      for col in ["title", "channel_title", "category"]]
             recomendaciones.append(self.__recomendar_variado(datos[0], datos[1], datos[2], n))
-        if una_sola:
-            return recomendaciones[0]
         return recomendaciones
 
     def save(self, ruta):
