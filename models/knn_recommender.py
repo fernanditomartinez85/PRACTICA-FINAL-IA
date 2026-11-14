@@ -64,7 +64,6 @@ class KNNRecommender:
         print("Vídeo elegido:", self.videos.loc[i, "title"], "|", self.videos.loc[i, "channel_title"], "|",
               self.videos.loc[i, "category"])
 
-        #trabajamos sobre una copia de las columnas que mostramos para no añadir la distancia a self.videos
         recomendaciones = self.videos[["title", "channel_title", "category", "pais", "views"]].copy()
         recomendaciones["distancia"] = self.__distancia_videos(i)
         recomendaciones = recomendaciones.sort_values(by="distancia")
