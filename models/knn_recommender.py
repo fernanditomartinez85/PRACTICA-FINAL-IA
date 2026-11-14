@@ -85,7 +85,7 @@ class KNNRecommender:
 
         return candidatos.loc[elegidos]
 
-    def predict(self, df, n=10):#n: número de recomendaciones
+    def predict(self, df, n=10):
         #con un vídeo (diccionario o Series) devuelve una tabla; con varios, una lista (None si no encuentra el vídeo)
         if isinstance(df, (dict, pd.Series)):
             df = pd.DataFrame([df])
