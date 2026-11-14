@@ -44,7 +44,7 @@ class KNNRecommender:
         distancia_canal = 1 - (self.X_canal @ self.X_canal[i].T).toarray().ravel()
         return distancia_titulo + distancia_tags + distancia_canal
 
-    def __recomendar(self, titulo=None, canal=None, categoria=None, n=10):
+    def __recomendar_variado(self, titulo=None, canal=None, categoria=None, n=10, umbral=0.5):
         if titulo is None and canal is None and categoria is None:
             print("Indica al menos el título, el canal o la categoría")
             return None
@@ -64,19 +64,12 @@ class KNNRecommender:
         print("Vídeo elegido:", self.videos.loc[i, "title"], "|", self.videos.loc[i, "channel_title"], "|",
               self.videos.loc[i, "category"])
 
-        recomendaciones = self.videos[["title", "channel_title", "category", "pais", "views"]].copy()
-        recomendaciones["distancia"] = self.__distancia_videos(i)
-        recomendaciones = recomendaciones.sort_values(by="distancia")
-        recomendaciones = recomendaciones.drop(index=i).head(n).drop(columns="distancia")
-
-        return recomendaciones
-
-    def __recomendar_variado(self, titulo=None, canal=None, categoria=None, n=10, umbral=0.5):
         #candidatos: los 500 vídeos más cercanos, ordenados de más a menos parecido
         #Vamos a ir descartando vídeos repetidos, y si pidiéramos solo 10 nos podríamos quedar con 3.
-        candidatos = self.__recomendar(titulo, canal, categoria, n=500)
-        if candidatos is None:
-            return None
+        candidatos = self.videos[["title", "channel_title", "category", "pais", "views"]].copy()
+        candidatos["distancia"] = self.__distancia_videos(i)
+        candidatos = candidatos.sort_values(by="distancia")
+        candidatos = candidatos.drop(index=i).head(500).drop(columns="distancia")
 
         elegidos = []
         for video in candidatos.index:
@@ -106,7 +99,7 @@ class KNNRecommender:
             df = pd.DataFrame(df, columns=["title", "channel_title", "category"])
         recomendaciones = []
         for _, fila in df.iterrows():
-            #en un csv lo que no se indica llega vacío: lo pasamos a None, que es lo que entiende __recomendar
+            #en un csv lo que no se indica llega vacío: lo pasamos a None, que es lo que entiende __recomendar_variado
             datos = [None if pd.isna(fila.get(col)) or fila.get(col) == "" else fila.get(col)
                      for col in ["title", "channel_title", "category"]]
             recomendaciones.append(self.__recomendar_variado(datos[0], datos[1], datos[2], n))
