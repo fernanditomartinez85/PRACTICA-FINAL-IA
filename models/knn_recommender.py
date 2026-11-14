@@ -34,10 +34,7 @@ class KNNRecommender:
         df = df.sort_values(by="views", ascending=False)
         df = df.drop_duplicates(subset=["title", "channel_title"], keep="first")
         self.videos = df.reset_index(drop=True)
-        X_titulo, X_tags, X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
-        self.X_titulo = X_titulo
-        self.X_tags = X_tags
-        self.X_canal = X_canal
+        self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
         return self
 
     def __distancia_videos(self, i):#método extra: suma de las 3 distancias del coseno, de 0 a 3
