@@ -92,7 +92,10 @@ class KNNRecommender:
         recomendaciones = []
         df = df.fillna("")
         df = df.replace("", None)#lo que no se indica (vacío) pasa a None, que es lo que entiende __recomendar_variado
-        for titulo, canal, categoria in zip(df["title"], df["channel_title"], df["category"]):
+        for i in range(len(df)):
+            titulo = df["title"].iloc[i]
+            canal = df["channel_title"].iloc[i]
+            categoria = df["category"].iloc[i]
             recomendaciones.append(self.__recomendar_variado(titulo, canal, categoria, n))
         return recomendaciones
 
