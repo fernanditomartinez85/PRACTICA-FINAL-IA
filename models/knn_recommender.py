@@ -44,46 +44,79 @@ class KNNRecommender:
         distancia_canal = 1 - (self.X_canal @ self.X_canal[i].T).toarray().ravel()
         return distancia_titulo + distancia_tags + distancia_canal
 
-    def __recomendar(self, datos, n):#método extra: recomendar_variado del notebook para un vídeo
-        #solo filtramos por lo que venga indicado (en un csv, lo que no se indica llega vacío)
-        indicados = {col: datos.get(col) for col in ["title", "channel_title", "category"] if datos.get(col) is not None
-                     and not pd.isna(datos.get(col)) and datos.get(col) != ""}
-        if not indicados:
+    def __recomendar(self, titulo=None, canal=None, categoria=None, n=10):
+        if titulo is None and canal is None and categoria is None:
             print("Indica al menos el título, el canal o la categoría")
             return None
-        coincidencias = self.videos
-        for col, valor in indicados.items():
-            if col == "title":#basta con que el título contenga el texto
-                coincidencias = coincidencias[coincidencias[col].str.contains(valor, case=False, regex=False)]
-            else:
-                coincidencias = coincidencias[coincidencias[col] == valor]
-        if coincidencias.empty:
-            print("No hemos encontrado ningún vídeo con esos datos:", indicados)
-            return None
-        i = coincidencias.index[0]#el más visto, porque los vídeos están ordenados por views
 
-        #candidatos del más cercano al más lejano, sin el propio vídeo
-        candidatos = pd.Series(self.__distancia_videos(i)).sort_values().drop(i).index[:500]#los 500 más cercanos
+        #filtramos solo por lo que nos indiquen: el título que contiene el texto, el canal y la categoría
+        coincidencias = self.videos
+        if titulo is not None:
+            coincidencias = coincidencias[coincidencias["title"].str.contains(titulo, case=False, regex=False)]
+        if canal is not None:
+            coincidencias = coincidencias[coincidencias["channel_title"] == canal]
+        if categoria is not None:
+            coincidencias = coincidencias[coincidencias["category"] == categoria]
+        if coincidencias.empty:
+            print("No hemos encontrado ningún vídeo con esos datos")
+            return None
+
+        i = coincidencias.index[0]#self.videos está ordenado por views, así que el primero es el más visto
+        print("Vídeo elegido:", self.videos.loc[i, "title"], "|", self.videos.loc[i, "channel_title"], "|",
+              self.videos.loc[i, "category"])
+
+        #trabajamos sobre una copia de las columnas que mostramos para no añadir la distancia a self.videos
+        recomendaciones = self.videos[["title", "channel_title", "category", "pais", "views"]].copy()
+        recomendaciones["distancia"] = self.__distancia_videos(i)
+        recomendaciones = recomendaciones.sort_values(by="distancia")
+        #quitamos el propio vídeo, que es el más cercano (distancia 0), nos quedamos con los n primeros y
+        #quitamos la distancia, que solo nos sirve para ordenar
+        recomendaciones = recomendaciones.drop(index=i).head(n).drop(columns="distancia")
+
+        return recomendaciones
+
+    def __recomendar_variado(self, titulo=None, canal=None, categoria=None, n=10, umbral=0.5):
+        #candidatos: los 500 vídeos más cercanos, ordenados de más a menos parecido
+        #Vamos a ir descartando vídeos repetidos, y si pidiéramos solo 10 nos podríamos quedar con 3.
+        candidatos = self.__recomendar(titulo, canal, categoria, n=500)
+        if candidatos is None:
+            return None
+
         elegidos = []
-        for video in candidatos:
+        for video in candidatos.index:
+            #solo lo añadimos si no se parece demasiado a ninguno de los ya elegidos
             video_seleccionado = True
-            for e in elegidos:
-                #si se parece más de 0,5 a alguno de los ya elegidos, no se selecciona
-                if (self.X_titulo[video] @ self.X_titulo[e].T)[0, 0] > 0.5:
+            for elegido in elegidos:
+                #similitud del título con el ya elegido (las filas de X_titulo están normalizadas):
+                #si se parece más de 0,5 (umbral), no se selecciona
+                if (self.X_titulo[video] @ self.X_titulo[elegido].T).toarray()[0, 0] > umbral:
                     video_seleccionado = False
+            #el primero siempre se selecciona, porque aún no hay con quién compararlo
             if video_seleccionado:
                 elegidos.append(video)
-                if len(elegidos) == n:
-                    break
-        return self.videos.loc[elegidos, ["title", "channel_title", "category", "pais", "views"]]
+            if len(elegidos) == n:
+                break
+
+        return candidatos.loc[elegidos]
 
     def predict(self, df, n=10):#n: número de recomendaciones
         #con un vídeo (diccionario o Series) devuelve una tabla; con varios, una lista (None si no encuentra el vídeo)
         if isinstance(df, (dict, pd.Series)):
-            return self.__recomendar(df, n)
+            df = pd.DataFrame([df])
+            una_sola = True
+        else:
+            una_sola = False
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(df, columns=["title", "channel_title", "category"])
-        return [self.__recomendar(fila, n) for _, fila in df.iterrows()]
+        recomendaciones = []
+        for _, fila in df.iterrows():
+            #en un csv lo que no se indica llega vacío: lo pasamos a None, que es lo que entiende __recomendar
+            datos = [None if pd.isna(fila.get(col)) or fila.get(col) == "" else fila.get(col)
+                     for col in ["title", "channel_title", "category"]]
+            recomendaciones.append(self.__recomendar_variado(datos[0], datos[1], datos[2], n))
+        if una_sola:
+            return recomendaciones[0]
+        return recomendaciones
 
     def save(self, ruta):
         with open(ruta, "wb") as f:
