@@ -18,7 +18,9 @@ class KNNRecommender:
         lista_canal = []#cada nombre de canal una etiqueta con el nombre entero, por eso no usamos split.
         for canal in df["channel_title"]:
             lista_canal.append([canal])
-        return palabras_titulo, lista_tags, lista_canal
+        return (normalize(self.mlb_titulo.fit_transform(palabras_titulo)),
+                normalize(self.mlb_tags.fit_transform(lista_tags)),
+                normalize(self.mlb_canal.fit_transform(lista_canal)))
 
     def __lista_tags(self, tags):#método extra: tags en lista y en minúsculas
         if tags == ["[none]"]:#por si no hubiera ningun tag
@@ -32,11 +34,7 @@ class KNNRecommender:
         df = df.sort_values(by="views", ascending=False)
         df = df.drop_duplicates(subset=["title", "channel_title"], keep="first")
         self.videos = df.reset_index(drop=True)
-        palabras_titulo, lista_tags, lista_canal = self.__preprocess_data(self.videos)
-        #no hay modelo que entrenar
-        self.X_titulo = normalize(self.mlb_titulo.fit_transform(palabras_titulo))
-        self.X_tags = normalize(self.mlb_tags.fit_transform(lista_tags))
-        self.X_canal = normalize(self.mlb_canal.fit_transform(lista_canal))
+        self.X_titulo, self.X_tags, self.X_canal = self.__preprocess_data(self.videos)#no hay modelo que entrenar
         return self
 
     def __distancia_videos(self, i):#método extra: suma de las 3 distancias del coseno, de 0 a 3
