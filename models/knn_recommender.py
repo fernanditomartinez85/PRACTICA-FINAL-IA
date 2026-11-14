@@ -31,7 +31,6 @@ class KNNRecommender:
         if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
                              columns=["title", "tags", "channel_title", "category", "pais", "views"])
-        #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
         videos = df[["title", "tags", "channel_title", "category", "pais", "views"]]
         videos = videos.sort_values(by="views", ascending=False)
         self.videos = videos.drop_duplicates(subset=["title", "channel_title"]).reset_index(drop=True)
