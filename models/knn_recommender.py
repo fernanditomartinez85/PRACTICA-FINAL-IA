@@ -78,7 +78,6 @@ class KNNRecommender:
                 #si se parece más de 0,5 (umbral), no se selecciona
                 if (self.X_titulo[video] @ self.X_titulo[elegido].T).toarray()[0, 0] > umbral:
                     video_seleccionado = False
-            #el primero siempre se selecciona, porque aún no hay con quién compararlo
             if video_seleccionado:
                 elegidos.append(video)
             if len(elegidos) == n:
