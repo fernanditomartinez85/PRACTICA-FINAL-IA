@@ -75,7 +75,6 @@ class KNNRecommender:
         for video in candidatos.index:
             video_seleccionado = True
             for elegido in elegidos:
-                #similitud del título con el ya elegido (las filas de X_titulo están normalizadas):
                 #si se parece más de 0,5 (umbral), no se selecciona
                 if (self.X_titulo[video] @ self.X_titulo[elegido].T).toarray()[0, 0] > umbral:
                     video_seleccionado = False
