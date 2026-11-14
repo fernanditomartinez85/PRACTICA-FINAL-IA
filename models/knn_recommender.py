@@ -11,15 +11,13 @@ class KNNRecommender:
         self.mlb_tags = MultiLabelBinarizer(sparse_output=True)
         self.mlb_canal = MultiLabelBinarizer(sparse_output=True)
 
-    def __preprocess_data(self, df):#solo se usa al entrenar: no hay rama de predecir
+    def __preprocess_data(self, df):
         palabras_titulo = df["title"].str.lower().str.split()
-        df["tags"] = df["tags"].str.split("|")#del csv vienen como texto separado por "|"
+        df["tags"] = df["tags"].str.split("|")
         lista_tags = df["tags"].apply(self.__lista_tags)
-        #MultiLabelBinarizer espera una lista por vídeo: con el texto suelto crearía una columna por letra
-        lista_canal = []
+        lista_canal = []#cada nombre de canal una etiqueta con el nombre entero, por eso no usamos split.
         for canal in df["channel_title"]:
             lista_canal.append([canal])
-        #devuelve tres matrices normalizadas (título, tags y canal) en vez de una X
         return (normalize(self.mlb_titulo.fit_transform(palabras_titulo)),
                 normalize(self.mlb_tags.fit_transform(lista_tags)),
                 normalize(self.mlb_canal.fit_transform(lista_canal)))
@@ -30,10 +28,7 @@ class KNNRecommender:
         return [tag.lower() for tag in tags]
 
     def fit(self, df, y=None):#y=None: train_models.py llama a fit con dos argumentos, aunque aquí no hay y
-        #aquí también acepta diccionario o Series, y el paso a DataFrame va en fit
-        if isinstance(df, (dict, pd.Series)):
-            df = pd.DataFrame([df])
-        elif not isinstance(df, pd.DataFrame):
+        if not isinstance(df, pd.DataFrame):
             df = pd.DataFrame(np.array(df, dtype=object).reshape(-1, 6),#valores en filas de 6 columnas
                              columns=["title", "tags", "channel_title", "category", "pais", "views"])
         #un registro por vídeo (el de más views), con el índice igual a su fila en las matrices
