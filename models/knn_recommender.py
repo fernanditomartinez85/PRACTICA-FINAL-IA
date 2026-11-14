@@ -18,9 +18,10 @@ class KNNRecommender:
         lista_canal = []#cada nombre de canal una etiqueta con el nombre entero, por eso no usamos split.
         for canal in df["channel_title"]:
             lista_canal.append([canal])
-        return (normalize(self.mlb_titulo.fit_transform(palabras_titulo)),
-                normalize(self.mlb_tags.fit_transform(lista_tags)),
-                normalize(self.mlb_canal.fit_transform(lista_canal)))
+        X_titulo = normalize(self.mlb_titulo.fit_transform(palabras_titulo))
+        X_tags = normalize(self.mlb_tags.fit_transform(lista_tags))
+        X_canal = normalize(self.mlb_canal.fit_transform(lista_canal))
+        return X_titulo, X_tags, X_canal
 
     def __lista_tags(self, tags):#método extra: tags en lista y en minúsculas
         if tags == ["[none]"]:#por si no hubiera ningun tag
