@@ -73,7 +73,6 @@ class KNNRecommender:
 
         elegidos = []
         for video in candidatos.index:
-            #solo lo añadimos si no se parece demasiado a ninguno de los ya elegidos
             video_seleccionado = True
             for elegido in elegidos:
                 #similitud del título con el ya elegido (las filas de X_titulo están normalizadas):
