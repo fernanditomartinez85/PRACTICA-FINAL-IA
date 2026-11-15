@@ -32,5 +32,5 @@ def entrenar(modelo, seccion_train_conf, X, y=None):#y=None porque hay modelos q
 
 entrenar(RFClassifier(), "rf_classifier", df, df["category"])
 entrenar(RFRegressor(), "rf_regressor", df_likes, df_likes["likes"])
-entrenar(KMeansClustering(), "kmeans_clustering", df)
 entrenar(KNNRecommender(), "knn_recommender", df)
+entrenar(KMeansClustering(), "kmeans_clustering", df)
