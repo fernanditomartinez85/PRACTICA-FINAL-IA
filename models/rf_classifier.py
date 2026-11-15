@@ -43,7 +43,7 @@ class RFClassifier:
     def predict(self, df):
         X = self.__preprocess_data(df)
         y_pred = self.rf.predict(X)
-        return self.label_encoder.inverse_transform(y_pred)#utilizamos para que salga el nombre de la categoria.
+        return self.label_encoder.inverse_transform(y_pred)#utilizamos para que salga el nombre de la categoría.
 
     def save(self, ruta):
         with open(ruta, "wb") as f:

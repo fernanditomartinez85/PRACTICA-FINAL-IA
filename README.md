@@ -12,14 +12,16 @@ Práctica final de IA con los vídeos en tendencia de YouTube de 10 países: pre
 ├── train_models.py              Entrena los modelos y los guarda
 ├── inference_model.py           Usa un modelo guardado con datos nuevos
 ├── train.conf                   Rutas de los datos y de los modelos
+├── requirements.txt             Versiones de las librerías
 └── models/                      Una clase por modelo (fit, predict, save, load)
 ```
 
 ## ▶️ Uso
 
-Con Python 3, pandas y scikit-learn (por ejemplo, Anaconda), desde la carpeta del proyecto:
+Con Python 3.12, desde la carpeta del proyecto:
 
 ```
+pip install -r requirements.txt
 python preprocess_data.py . datos_limpios.csv
 python train_models.py train.conf
 python inference_model.py rf_classifier rf_classifier.pkl datos_limpios.csv
@@ -32,7 +34,7 @@ En la inferencia, el modelo puede ser `rf_classifier`, `rf_regressor`, `kmeans_c
 | Problema | Modelo | Resultado |
 |---|---|---|
 | Categoría | Random Forest optimizado | F1 macro 0,32 |
-| Likes | Random Forest | R2 0,949 |
+| Likes | Random Forest optimizado | R2 0,785 |
 | Grupos de vídeos | K-Means (2 grupos) sobre PCA | Silhouette 0,41 |
 | Recomendación | Vídeos más parecidos en título, tags y canal, sin repetir versiones del mismo vídeo | Recomienda la misma canción o el mismo artista |
 

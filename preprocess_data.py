@@ -10,10 +10,10 @@ args = parser.parse_args()
 
 
 def actualizacion_categoria_pais(ruta_csv, ruta_json, nombre_pais):
-    """Función que actualiza la category_id del Csv reemplazando por el valor string asignado
-    en el fichero json y añade columna con el pais."""
+    """Función que actualiza la category_id del CSV reemplazando por el valor string asignado
+    en el fichero json y añade columna con el país."""
 
-    dfjson = pd.read_json(ruta_json)#en vez de leer linea por linea, empaqueta todo el json
+    dfjson = pd.read_json(ruta_json)#en vez de leer línea por línea, empaqueta todo el json
     dfjson_aplanado = pd.json_normalize(dfjson["items"])
     dfjson_items = pd.DataFrame({"json_id": dfjson_aplanado["id"].astype(str),
                                  "category": dfjson_aplanado["snippet.title"]})
@@ -25,13 +25,13 @@ def actualizacion_categoria_pais(ruta_csv, ruta_json, nombre_pais):
 
     df_final = df_final.drop(columns=["json_id", "category_id"])
 
-    df_final["pais"] = nombre_pais#creamos la columna pais
+    df_final["pais"] = nombre_pais#creamos la columna país
 
     return df_final
 
 
 paises = {"CA": "Canadá", "DE": "Alemania", "FR": "Francia", "GB": "Gran Bretaña", "IN": "India",
-          "JP": "Japón", "KR": "Corea", "MX": "Mexico", "RU": "Rusia", "US": "USA"}
+          "JP": "Japón", "KR": "Corea", "MX": "México", "RU": "Rusia", "US": "USA"}
 
 dataframe_por_pais = (actualizacion_categoria_pais(f"{args.ruta_entrada}/{c}videos.csv",
                                                    f"{args.ruta_entrada}/{c}_category_id.json", nombre)

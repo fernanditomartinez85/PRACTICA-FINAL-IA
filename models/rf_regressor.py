@@ -11,7 +11,7 @@ class RFRegressor:
     def __init__(self):
 
         encoder = OneHotEncoder(handle_unknown="ignore")
-        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1)
+        self.rf_likes = RandomForestRegressor(random_state=42, n_jobs=-1, max_samples=0.8)
         self.preprocess_rf_likes = ColumnTransformer(transformers=[
             ("encoder", encoder, ["pais", "category"]),
             ("numericas", "passthrough",

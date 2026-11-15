@@ -20,6 +20,7 @@ class KMeansClustering:
                               columns=["views", "likes", "dislikes", "comment_count", "dias_desde_publicacion",
                                        "tags", "title", "channel_title"])
 
+        df = df.copy()
         df["tags"] = df["tags"].str.split("|")#del csv vienen como texto separado por "|"
         df["n_tags"] = df["tags"].apply(self.__contar_tags)
 
@@ -28,7 +29,7 @@ class KMeansClustering:
         return df
 
     def __contar_tags(self, tags):
-        if tags == ["[none]"]:#por si no hubiera ningun tag
+        if tags == ["[none]"]:#por si no hubiera ningún tag
             return 0
         return len(tags)
 
